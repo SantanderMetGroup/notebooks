@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+cache/
+figs/
+Notebooks.Rproj
+dicEOBS.dic
+dicCDX.dic
+CDX_rcp85.ncml
+CDX_hist.ncml
+
