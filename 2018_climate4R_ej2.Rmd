@@ -82,9 +82,10 @@ If the data is to be loaded from the UDG, we can use function `UDG.datasets` to 
 
 
 ```{r cordexens, message=FALSE, warning=FALSE}
-ds <- UDG.datasets()
-ds$name[grepl("CORDEX44.*historical", ds$name)]
-ensemble.h <- as.character(ds$url[grepl("EUROCORDEX44.*historical", ds$name)])[1:6]
+models <- UDG.datasets()
+models$name[grepl("EUROCORDEX44.*historical", models$name)]
+ensemble.h <- as.character(models$url[grepl("EUROCORDEX44.*historical", 
+                                            models$name)])[1:6]
 ```
 
 ```{r, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE}
