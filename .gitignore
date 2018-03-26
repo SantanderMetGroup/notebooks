@@ -2,9 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
-cache/
-figs/
-Notebooks.Rproj
+.cache/
+notebooks.Rproj
 dicEOBS.dic
 dicCDX.dic
 CDX_rcp85.ncml

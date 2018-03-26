@@ -18,10 +18,10 @@ vignette: >
 ---
 
 ```{r set, results='hide', message=FALSE, echo=FALSE}
- knitr::opts_chunk$set(fig.width = 6, fig.height = 4, cache = TRUE, cache.path = "./cache/", fig.path = "./figs/") 
+ knitr::opts_chunk$set(fig.width = 6, fig.height = 4, cache = TRUE, cache.path = "./cache/ex2", fig.path = "./cache/ex2/figs/") 
 ```
 
-This worked example is the full code that reproduces the 2nd example of the paper `climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction' (Sec. 6 of the manuscript). Therefore, these are the climate4R packages we work with:
+This worked example contains the full code that reproduces the 2nd example of the paper `climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction' (Sec. 6 of the manuscript). Therefore, these are the climate4R packages we work with:
 
 ```{r, message=FALSE, warning=FALSE}
 library(loadeR)
