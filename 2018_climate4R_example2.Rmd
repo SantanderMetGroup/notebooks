@@ -3,6 +3,8 @@ title: "Full code for Example 2 of the paper `climate4R: An Ecosystem of R packa
 author: "M. Iturbide, J. Bedia, S. Herrera, J. Baño, J. Fernández, M. D. Frías, R. Manzanas, D. San Martín, E. Cimadevilla, A.S. Cofiño, J. M. Gutiérrez"
 date: "`r Sys.Date()`"
 csl: elsarticle.csl
+header-includes:
+  - \usepackage[font={small}]{caption}
 output: 
     rmarkdown::pdf_document:
         fig_caption: yes
@@ -15,13 +17,18 @@ vignette: >
   %\VignetteIndexEntry{mopa within the climate4R ecosystem}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+urlcolor: blue
 ---
 
 ```{r set, results='hide', message=FALSE, echo=FALSE}
- knitr::opts_chunk$set(fig.width = 6, fig.height = 4, cache = TRUE, cache.path = "./cache/ex2", fig.path = "./cache/ex2/figs/") 
+ knitr::opts_chunk$set(fig.width = 6, fig.height = 4, cache = TRUE, cache.path = "./cache/ex2/", fig.path = "./cache/ex2/figs") 
 ```
 
-This worked example contains the full code that reproduces the 2nd example of the paper `climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction' (Sec. 6 of the manuscript). Therefore, these are the climate4R packages we work with:
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE}
+options(java.parameters = "-Xmx8000m")
+```
+
+This worked example contains the full code that reproduces the 2nd example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 6 of the manuscript). Here, the same titles are used for the main sections (see index). These are divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting package installation and the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively. 
 
 ```{r, message=FALSE, warning=FALSE}
 library(loadeR)
@@ -31,7 +38,7 @@ library(downscaleR)
 library(climate4R.climdex)
 ```
 
-First, we repeat the code that is shown in the first example of the paper (see the corresponding notebook [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/devel/2018_climate4R_example1.pdf)) and generate objects that are also used here. These are the (1) color palettes for visualization and the (2) URL and (3) the dictionary file to load E-OBS observational data. 
+First, we repeat the code that is shown in example 1 of the paper (see the corresponding notebook [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/devel/2018_climate4R_example1.pdf)) and generate objects that are also used here. These are the (1) color palettes for visualization and the (2) the URL and (3) the dictionary file to load the maximum temperature from the E-OBS observational dataset. 
 
 (1) Brewer palettes:
 ```{r palettes, message=FALSE, warning=FALSE, echo=FALSE}
@@ -56,21 +63,20 @@ writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,
              "tasmax,tx,24h,0,24,max,0,1,0,0,"), "dicEOBS.dic")
 ```
 
+
 # Example 2: CORDEX Ensembles via the User Data Gateway
 
 ### Loading
 
-In this case we load temperature daily data for the Iberian Peninsula:
+We define the domain of the Iberian Peninsula with the following bounding coordinates:
 
 ```{r boundary, message=FALSE, warning=FALSE}
 lon <- c(-10, 5)
 lat <- c(36, 44)
 ```
 
-
-#### E-OBS obervation data
-
-Observation data is loaded in the same manner as in example 1 (see )
+Observation data is loaded in the same manner as in example 1 (see [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/devel/2018_climate4R_example1.pdf))
+but considering the domain of the Iberian Peninsula instead of southern Europe.
 
 ```{r loadeobs, message=FALSE, warning=FALSE}
 TX <- loadGridData(eobs,
@@ -82,7 +88,6 @@ TX <- loadGridData(eobs,
                          dictionary = "dicEOBS.dic")
 
 ```
-
 
 
 #### CORDEX data loading from the UDG
@@ -113,7 +118,7 @@ TXh.list <- lapply(ensemble.h, function(x)
 ```
 
 ```{r loadrcp, message=FALSE, warning=FALSE}
-ensemble.f <- as.character(ds$url[grepl("EUROCORDEX44.*rcp85", ds$name)])[1:6]
+ensemble.f <- as.character(models$url[grepl("EUROCORDEX44.*rcp85", models$name)])[1:6]
 TXf.list <- lapply(ensemble.f, function(x) 
                           loadGridData(dataset = x,
                           var = "tasmax",
@@ -339,6 +344,9 @@ temporalPlot(SU.Z,
                                              columns = 3, rows = 3)))
 ```
 
+```{r endpart1, warning=FALSE, message=FALSE, echo=FALSE}
+rm(list=c("SU.Z", "SU","SUh.ens","SU.Z.eobs","SU.Z.cdx","SU.Z.1m","SUf.ens.bc.mean","TXh.ens","TXf.ens","TXf.ens.bc"))
+```
 
 ### Calculate other indexes
 
