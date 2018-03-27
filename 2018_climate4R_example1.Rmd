@@ -3,6 +3,8 @@ title: "Full code for Example 1 of the paper `climate4R: An Ecosystem of R packa
 author: "M. Iturbide, J. Bedia, S. Herrera, J. Baño, J. Fernández, M. D. Frías, R. Manzanas, D. San Martín, E. Cimadevilla, A.S. Cofiño, J. M. Gutiérrez"
 date: "`r Sys.Date()`"
 csl: elsarticle.csl
+header-includes:
+  - \usepackage[font={small}]{caption}
 output: 
     rmarkdown::pdf_document:
         fig_caption: yes
@@ -15,6 +17,7 @@ vignette: >
   %\VignetteIndexEntry{mopa within the climate4R ecosystem}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+urlcolor: blue
 ---
 
 ```{r set, results='hide', message=FALSE, echo=FALSE}
@@ -23,12 +26,12 @@ vignette: >
 
 # Introduction
 
-Packages in `climate4R`:
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE}
 options(java.parameters = "-Xmx8000m")
 ```
 
-This worked example contains the full code that reproduces the 1rst example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 5 of the manuscript). Here, the same titles are used for the main sactions. These are divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting package installation and the cration of color palletes, for which packages `devtools` and `RColorBrewer` are used respectively.
+This worked example contains the full code that reproduces the 1rst example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 5 of the manuscript). Here, the same titles are used for the main sections (see index). These are divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting package installation and the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively.
 climate4R packages are installed by means of the `devtools' package:
 
 
@@ -50,27 +53,28 @@ library(downscaleR)
 library(climate4R.climdex)
 ```
 
+
 # Example 1: Climate Indices from CORDEX Projections
 
 ## Loading, collocating and harmonizing data 
 
-The domain of the study area is defined by the following bounding coordinates.
+The domain of the study area is defined by the following bounding coordinates:
 
 ```{r cars, message=FALSE, warning=FALSE}
 lon <- c(-10, 20)
 lat <- c(35, 46)
 ```
 
-### Cliamte data loading from OpenDap server: E-OBS observational data 
+### Cliamte data loading from OPeNDAP server: E-OBS observational data 
 
-As described in the paper, the SU index (summer days) can be obtained on-the-fly by loading maximum temperature data with function `loadGridData` and by the following argument settings: `aggr.m = "sum"`, `condition = "GT"` and `threshold = 25`. First we load E-OBS observational data by pointing to a NetCDF file via OPeNDAP. Previuous to loading function `dataInventory` might be applied for an overview of the dataset, which returns an inventory of the available variables names, units, coordinates, etc.  
+As described in the paper, the SU index (summer days) can be obtained on-the-fly by loading maximum temperature data with function `loadGridData` and by the following argument settings: `aggr.m = "sum"`, `condition = "GT"` and `threshold = 25`. First we load E-OBS observational data by pointing to a NetCDF file via OPeNDAP. Previous to loading, function `dataInventory` might be applied for an overview of the dataset, which returns an inventory (object `di`) of the available variables names, units, coordinates, etc.  
 
 ```{r, message=FALSE, warning=FALSE}
 eobs<-"http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/tx_0.25deg_reg_v16.0.nc"
 di <- dataInventory(eobs)
 ```
 
-In this case, the NetCDF file contains maximum temperature data named as "tx", thus, we set `var = "tx"` in `loadGridData`:
+In this case, the NetCDF file contains maximum temperature data named as "tx", thus, we set `var = "tx"` when calling to `loadGridData`:
 
 ```{r sueobs, message=FALSE, warning=FALSE, eval=FALSE}
 SU <- loadGridData(eobs, var = "tx",
@@ -85,13 +89,13 @@ SU <- loadGridData(eobs, var = "tx",
 
 #### Using a dictionary
 
-In order to load and work with harmonized data we can repit the above operation using a dictionary file, that defines the necessary name and unit transformations to the standard parameters. Function `C4R.vocabulary` displays the climate4R standard vaiable naming and units:
+In order to load and work with harmonized data we can repeat the above operation using a dictionary file, that defines the necessary name and unit transformations to the standard parameters. Function `C4R.vocabulary` displays the climate4R standard variable naming and units:
 
 ```{r showvocabulary, message=FALSE, warning=FALSE}
 C4R.vocabulary()
 ```
 
-In this case, the only non-standard thing in the E-OBS dataset is the variable name ("tx"), however, we could perform further loading requests using the standard name if a dictionary file is crated previuously (see the [`loadeR` wiki](https://github.com/SantanderMetGroup/loadeR/wiki/Harmonization)). This can be done easily, for instance, in the following manner:
+In this case, the only non-standard parameter in the E-OBS dataset is the variable name ("tx"), however, we could perform further loading requests using the standard name if a dictionary file is crated previously (see the [`loadeR` wiki](https://github.com/SantanderMetGroup/loadeR/wiki/Harmonization)). This can be done easily, for instance, in the following manner:
 
 ```{r eobsdictionary, message=FALSE, warning=FALSE, eval=FALSE}
 file.create("dicEOBS.dic")
@@ -100,7 +104,7 @@ writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,
              "tasmax,tx,24h,0,24,max,0,1,0,0,"), "dicEOBS.dic")
 ```
 
-Next the loading operation is repeated but using the standard name for the maximum temperature (`var = "tasmax"`) by passing the path to our *.dic file ("dicEOBS.dic") in argument `dictionary`:
+Next the loading operation is repeated but using the standard name for the maximum temperature (`var = "tasmax"`) and by passing the path to our *.dic file ("dicEOBS.dic") in argument `dictionary`:
 
 ```{r sueobsagain, message=FALSE, warning=FALSE}
 SU <- loadGridData(eobs,
@@ -115,7 +119,7 @@ SU <- loadGridData(eobs,
                          dictionary = "dicEOBS.dic")
 ```
 
-#### transformation and visualization
+#### Transformation and visualization
 
 Note that `loadGridData` returns monthly summer days (SU). To compute the annual index we only need to apply function `aggregateGrid` that performs the aggregation of the desired data dimension (in this case `time`). We use argument `aggr.y` to perform annual aggregation with function `sum`:
 
@@ -125,7 +129,7 @@ SU.annual <- aggregateGrid(SU, aggr.y = list(FUN = "sum"))
 
 Type `?aggregateGrid` to see other aggregation options.
 
-At this point we can plot the first map by using function `spatialPlot`, which by default incorporates a color palette for drawing maps. However, we could use the desirded color range. We recommend package `RColorBrewer` to create palettes with function `brewer.pal`. The ones used in the manuscript are the following:
+At this point we can plot the first map by using function `spatialPlot`, which by default incorporates a color palette for drawing maps. However, we could use the desired color range. We recommend package `RColorBrewer` to create palettes with function `brewer.pal`. The ones used in the manuscript are the following:
 
 
 ```{r palettes, message=FALSE, warning=FALSE}
@@ -147,7 +151,7 @@ spatialPlot(climatology(SU.annual), backdrop.theme = "countries",
 
 ### Cliamte data loading from local files: CORDEX climate change projections
 
-Next, projection data (both the historical and the RCP8.5 scenarios) is loaded from local NetCDF files, which correspond to a particular RCM (Regional Climate Model ICHEC-EC-EARTH_r12i1p1_SMHI-RCA4_v1) from EURO-CORDEX. These files were downloaded from ESGF (see Appendix A in the manuscript) and stored locally. Next we list them in objects `dir` and `dirf`, the firs corresponding to the historical scenario and the second to the future RCP8.5.
+Next, projection data (for both the historical and the RCP8.5 scenarios) is loaded from local NetCDF files, which correspond to a particular RCM (Regional Climate Model ICHEC-EC-EARTH_r12i1p1_SMHI-RCA4_v1) from EURO-CORDEX. These files were downloaded from ESGF (see Appendix A in the manuscript) and stored locally. Next we list them in objects `dir` and `dirf`, the first corresponding to the historical scenario and the second to the future RCP8.5.
 
 ```{r listfiles, eval = FALSE, message=FALSE, warning=FALSE}
 #historical data
@@ -164,7 +168,7 @@ dirf <- "/oceano/gmeteo/DATA/ESGF/DATASETS/CORDEX/output/EUR-44/SMHI/ICHEC-EC-EA
 list.files(dir, recursive = T)
 ```
 
-Each file in the list contains data for a 5-year period of the same variable (tasmax). Therefore, we use a "catalog" (*.ncml file) to load data for the desired period without worriyng about the different files that need to be read and binded. Next we create two catalogs (for each scenario) with function `makeAggregateDataset` ("CDX_hist.ncml" and "CDX_rcp85.ncml"):
+Each file in the list contains data for a 5-year period of the same variable (tasmax). Therefore, we use a "catalog" (*.ncml file) to load data for the required period without worrying about the different files that need to be read and bound. Next we create two catalogs (for each scenario) with function `makeAggregateDataset` ("CDX_hist.ncml" and "CDX_rcp85.ncml"):
 
 ```{r creatncml, message=FALSE, warning=FALSE}
 makeAggregatedDataset(source.dir = dir, recursive = T, ncml.file = "CDX_hist.ncml")
@@ -178,7 +182,7 @@ di <- dataInventory("CDX_hist.ncml")
 str(di$tasmax)
 ```
 
-Contrarily to the case of the E-OBS dataset, the variable name is standard but not the units (K). Therefore we define the harmonization parameters in another dictionary file ("dicCDX.dic"), where the offset is -273.15 to convert the data to the standar units (ºC):
+Contrarily to the case of the E-OBS dataset, the variable name is standard, but not the units (K). Therefore we define the harmonization parameters in another dictionary file ("dicCDX.dic"), where the offset is -273.15 to convert the data to the standard units (ºC):
 
 ```{r cordexdic, message=FALSE, warning=FALSE,eval=FALSE}
 file.create("dicCDX.dic")
@@ -205,7 +209,7 @@ SUh <- loadGridData(dataset = "CDX_hist.ncml",
 ```
 
 
-The same operations of annual aggragation and visualization shown before are repeated next. As a result Figure \ref{fig:fig2b} is obtained (Fig. 2b in the manuscript).
+The same operations of annual aggregation and visualization shown before are repeated next. As a result Figure \ref{fig:fig2b} is obtained (Fig. 2b in the manuscript).
 
 ```{r sucordexhistannual, message=FALSE, warning=FALSE}
 SUh.annual <- aggregateGrid(SUh, aggr.y = list(FUN = "sum"))
@@ -216,9 +220,9 @@ spatialPlot(climatology(SUh.annual), at = seq(0, 260, 10),
             col.regions = colorRampPalette(colsindex))
 ```
 
-As can be noted in Figure \ref{fig:fig2b}, the spatial grid of CORDEX is different from E-OBS (Figure \ref{fig:fig2a}). We can use functions `interpGrid` to perform interpolation of CORDEX data to the E-OBS spatial grid as follows. This allows to compute the SU bias of CORDEX data w.r.t E-OBS in the reference period (1971-2000), for which function `gridArithmetics` is used. 
+As can be noted in Figure \ref{fig:fig2b}, the spatial grid of CORDEX is different from E-OBS (Figure \ref{fig:fig2a}). We can use function `interpGrid` to interpolate CORDEX data to the E-OBS spatial grid, allowing the subsequent extraction of the SU bias in the reference period (1971-2000). This is done by subtracting the SU index of E-OBS (object `SU.annual`) to the SU index of historical CORDEX (object `SUh.interp`), for which function `gridArithmetics` is used. 
 
-Despite not being necessary, here we apply a land mask before calculating the bias in order to eliminate the values projected by the CORDEX model over the sea. To do so, `gridArithmetics` might be used, first to create the mask and second to apply it.
+Despite not being necessary, here we apply a land mask before calculating the bias in order to eliminate the values projected by the CORDEX model over the sea. To do so, `gridArithmetics` might be also used, first to create the mask and second to apply it.
 
 ```{r sucordexhistbias, message=FALSE, warning=FALSE}
 SUh.interp <- interpGrid(SUh.annual, getGrid(SU.annual))
@@ -242,7 +246,7 @@ spatialPlot(climatology(bias), backdrop.theme = "countries",
 
 #### Future data
 
-Next, we repeat the same operations of data loading and transformation but for the RCP8.5 scenario and future period 2071-2100.
+We repeat the same operations of data loading and transformation but for the RCP8.5 scenario and future period 2071-2100:
 
 ```{r sucordexrcp, message=FALSE, warning=FALSE}
 SUf <- loadGridData(dataset = "CDX_rcp85.ncml",
@@ -261,7 +265,7 @@ SUf <- loadGridData(dataset = "CDX_rcp85.ncml",
 SUf.annual <- aggregateGrid(SUf, aggr.y = list(FUN = "sum"))
 ```
 
-In this case the application of gridArithmetics gives the porjected climate change signal w.r.t the historical data (object `CCsignal`).
+Note that in this case the application of `gridArithmetics` gives the projected climate change signal (object `CCsignal`) w.r.t the historical period (object `SUh.interp`).
 
 ```{r ccsignal, message=FALSE, warning=FALSE}
 SUf.interp <- interpGrid(SUf.annual, getGrid(SU.annual))
@@ -272,7 +276,7 @@ CCsignal <- gridArithmetics(SUf.interp,
                             operator = "-")
 ```
 
-Figures \ref{fig:fig3a} and \ref{fig.fig3b} are generated next, which show the future SU index and the climate change signal (Figs. 3a and 3b in the manuscript).
+Figures \ref{fig:fig3a} and \ref{fig:fig3b} are generated next, which show the future SU index and the climate change signal (Figs. 3a and 3b in the manuscript).
 
 ```{r fig3a, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig3a}Southern Europe summer days for the interpolated EC-EARTH driven, RCP8.5 scenario in the future period 2071-2100. Fig. 3a in the manuscript."}
 spatialPlot(climatology(SUf.interp), backdrop.theme = "countries", 
@@ -285,7 +289,7 @@ spatialPlot(climatology(CCsignal), backdrop.theme = "countries",
 
 ## Post-processing: Bias Correction
 
-Next the "additive" type of the "scaling" method is applied to bias correct future montly CORDEX data (object `SUf`) by means of function `biasCorrection`. The output is annually aggregated (object `SUf.bc.annual`) and the climate change signal is again calculated from the bias corrected data (object `CCsignal.bc`). 
+Next the "additive" type of the "scaling" method is applied to bias correct future monthly CORDEX data (object `SUf`) by means of function `biasCorrection`. The output is annually aggregated (object `SUf.bc.annual`) and the climate change signal is again calculated from the bias corrected data (object `CCsignal.bc`). 
 
 ```{r sscignalbc, message=FALSE, warning=FALSE}
 SUf.bc <- biasCorrection(y = SU, x = SUh, newdata = SUf, 
@@ -308,29 +312,31 @@ spatialPlot(climatology(CCsignal.bc), backdrop.theme = "countries",
             at = seq(0, 80, 5), col.regions = colorRampPalette(colsdelta))
 ```
 
-Other useful plotting function is `temporalPlot` that displays temporal series for multiple datasets
-and periods on the same plot, here the SU annual index for E-OBS and CORDEX (raw and bias corrected) and for reference and future periods (1971-2000 and 2071-2100). This function is based on `lattice` and arguments from function `xyplot` are optianlly passed to argument `xyplot.custom`, allowing for a fine tuning of multiple graphical parameters.
+Other useful plotting function is `temporalPlot` that displays temporal series of multiple datasets
+and periods on the same plot. Here we plot the series corresponding to a single grid box (the one nearest to Zaragoza, Spain), therefore, a previous spatial subsetting is done with function `subsetGrid` (`latLim = 41.64` and `lonLim = -0.89`). As a result object `ts` is obtained, a list that contains the SU index for E-OBS and CORDEX. If several grid boxes are considered (e.g. the whole domain) `temporalPlot` performs the spatial (`lat` and `lon` dimensions) aggregation before plotting (the `mean` is computed by default, type `?temporalPlot`).
+
+Note that function `temporalPlot` is based on `lattice` and arguments from function `xyplot` are optionally passed to argument `xyplot.custom`, allowing for a fine tuning of multiple graphical parameters. The next code chunk generates Figure \ref{fig:fig4} (Fig. 4 in the manuscript).
 
 
 ```{r fig4, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig4}Annual summer days time series for a single gridbox (Zaragoza, Spain) for the observations (E-OBS) and the projection (original and bias corrected) in the historical and future periods. Fig. 4 in the manuscript."}
-Z <- lapply(list("E-OBS" = SU.annual, "CDX_hist" = SUh.interp, 
+ts <- lapply(list("E-OBS" = SU.annual, "CDX_hist" = SUh.interp, 
                  "CDX_rcp85" = SUf.interp, "CDX_rcp85_corrected" = SUf.bc.annual), 
             function(x)  subsetGrid(x, latLim = 41.64, lonLim = -0.89))
 cols = c("black", "red", "red", "blue")
-temporalPlot(Z, cols = cols, lwd = 0.8, xyplot.custom = list(ylab = "", ylim = c(70, 220),
+temporalPlot(ts, cols = cols, lwd = 0.8, xyplot.custom = list(ylab = "", ylim = c(70, 220),
   key = list(space = "top", lines = list(pch = 15, col = cols, cex = .5), 
-             text = list(names(Z), 
+             text = list(names(ts), 
                          cex = .7), columns = 2)))
 ```
 
 
 ```{r END_PART_1, echo=FALSE, message=FALSE, warning=FALSE}
-rm(list = c("SU", "SU.annual", "SUh", "SUh.annual", "SUh.interp", "SUf", "SUf.interp", "SUf.annual", "SUf.bc", "SUf.bc.annual", "CCsignal", "CCsignal.bc", "bias"))
+rm(list = c("SU", "SU.annual", "SUh", "SUh.annual", "SUh.interp", "SUf", "SUf.interp", "SUf.annual", "SUf.bc", "SUf.bc.annual", "CCsignal", "CCsignal.bc", "bias", "ts"))
 ```
 
 ## Working with daily data
 
-
+Alternatively, the SU index could be calculated using the `climate4R.climdex` package from the original variable (maximum temperature). To do so, we first load daily maximum temperature data by using the previously created dictionaries:
 
 ```{r loadtemperature, message=FALSE, warning=FALSE}
 TX <- loadGridData(eobs,
@@ -356,6 +362,8 @@ TXf <- loadGridData(dataset = "CDX_rcp85.ncml",
                      dictionary = "dicCDX.dic")
 ```
 
+Since we are now working with daily data, we can use the EQM (Empirical Quantile Mapping) method to bias correct the original variable. As pointed in the previous section, CORDEX projections are built over rotated grids. Nevertheless, function `biasCorrection` performs data interpolation internally taking as spatial reference the grid of observation data (E-OBS, object `TX`). Therefore, it is not necessary to use `interpGrid` before applying `biasCorrection`. 
+
 ```{r biascorrect, message=FALSE, warning=FALSE}
 TXf.bc <- biasCorrection(y = TX, 
                          x = TXh, 
@@ -365,16 +373,21 @@ TXf.bc <- biasCorrection(y = TX,
                          extrapolation = "constant")
 ```
 
+Next, we calculate the annual SU index with function `climdexGrid` for future raw (object `SUf`) and bias corrected (object `SUf.bc`) CORDEX data:
+
 ```{r calculateSU, message=FALSE, warning=FALSE}
 SUf <- climdexGrid(tx = TXf, index.code = "SU")
 SUf.bc <- climdexGrid(tx = TXf.bc, index.code = "SU")
 ```
+
+To obtain comparable maps and/or perform further operations between the obtained results (e.g. using `gridArithmetics`), we can interpolate the raw SU index (function `interpGrid`) to the E-OBS spatial grid and apply the land-sea mask (function `gridArithmetics`) in the manner previously shown:
 
 ```{r applymask, message=FALSE, warning=FALSE}
 SUf.interp <- interpGrid(SUf, getGrid(TX))
 SUf.interp <- gridArithmetics(SUf.interp, eobs.mask, operator = "+")
 ```
 
+Finally, the maps of raw (Fig. \ref{fig:fig5a}) and bias corrected (Fig. \ref{fig:fig5}) SU index for the EC-EARTH driven, RCP8.5 scenario (period 2071-2100) are plotted resulting in Figures \ref{fig:fig5a} (Not shown in the manuscript) and \ref{fig:fig5} (Fig. 5 in the manuscript).
 
 ```{r fig5a, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig5a}Southern Europe summer days for the EC-EARTH driven, RCP8.5 scenario in the future period 2071-2100 (calculated with package climate4R.climdex from daily data). Not shown in the manuscript."}
 spatialPlot(climatology(SUf.interp), backdrop.theme = "countries", 
@@ -385,7 +398,22 @@ spatialPlot(climatology(SUf.bc), backdrop.theme = "countries",
             at = seq(0, 260, 10), col.regions = colorRampPalette(colsindex))
 ```
 
+
+
 ```{r end, echo= FALSE, message=FALSE, warning=FALSE}
 rm(list = c("TX","TXh", "TXf", "TXf.bc", "SUf", "SUf.bc"))
 ```
+
+\newpage
+
+***
+NOTE: Find more worked examples on the utilization of climate4R packages in their respective GitHub **wiki**-s at [https://github.com/SantanderMetGroup](https://github.com/SantanderMetGroup):
+
+* [loadeR: https://github.com/SantanderMetGroup/loadeR/wiki](https://github.com/SantanderMetGroup/loadeR/wiki)
+* [transformeR: https://github.com/SantanderMetGroup/transformeR/wiki](https://github.com/SantanderMetGroup/transformeR/wiki)
+* [downscaleR: https://github.com/SantanderMetGroup/downscaleR/wiki](https://github.com/SantanderMetGroup/downscaleR/wiki)
+* [visualizeR: https://github.com/SantanderMetGroup/visualizeR/wiki](https://github.com/SantanderMetGroup/visualizeR/wiki) 
+
+***
+
 
