@@ -28,7 +28,21 @@ urlcolor: blue
 options(java.parameters = "-Xmx8000m")
 ```
 
-This worked example contains the full code that reproduces the 2nd example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 6 of the manuscript). Here, the same titles are used for the main sections (see index). These are divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting package installation and the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively. 
+
+# Introduction
+
+This worked example contains the full code that reproduces the 2nd example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 6 of the manuscript). The main section is divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting (1) package installation and (2) the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively:
+
+(1) Package installation:
+```{r, eval=FALSE}
+library(devtools)
+install_github(c("SantanderMetGroup/loadeR",
+                 "SantanderMetGroup/loadeR.java",
+                 "SantanderMetGroup/transformeR",
+                 "SantanderMetGroup/visualizeR",
+                 "SantanderMetGroup/downscaleR",
+                 "SantanderMetGroup/climate4R.climdex")
+```
 
 ```{r, message=FALSE, warning=FALSE}
 library(loadeR)
@@ -38,10 +52,9 @@ library(downscaleR)
 library(climate4R.climdex)
 ```
 
-First, we repeat the code that is shown in example 1 of the paper (see the corresponding notebook [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/devel/2018_climate4R_example1.pdf)) and generate objects that are also used here. These are the (1) color palettes for visualization and the (2) the URL and (3) the dictionary file to load the maximum temperature from the E-OBS observational dataset. 
 
-(1) Brewer palettes:
-```{r palettes, message=FALSE, warning=FALSE, echo=FALSE}
+(2) Brewer palettes:
+```{r palettes, message=FALSE, warning=FALSE}
 library(RColorBrewer)
 colstx <- rev(brewer.pal(n = 9, "Spectral"))
 colsindex <- rev(brewer.pal(n = 9, "RdYlBu"))
@@ -50,23 +63,14 @@ colsbias <- brewer.pal(n = 9, "PiYG")
 colssd <- brewer.pal(n = 9, "Blues")
 ```
 
-(2) URL to the E-OBS data:
-```{r eobsurl, message=FALSE, warning=FALSE}
-eobs <- "http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/tx_0.25deg_reg_v16.0.nc"
-```
+***
+NOTE: see also [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/master/2018_climate4R_example1.pdf) for a better understanding of this document.
 
-(3) Dictionary file for harmonizing E-OBS data:
-```{r , message=FALSE, warning=FALSE, eval=FALSE}
-file.create("dicEOBS.dic")
-writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,
-             cell_method,offset,scale,deaccum,derived,interface",
-             "tasmax,tx,24h,0,24,max,0,1,0,0,"), "dicEOBS.dic")
-```
-
+***
 
 # Example 2: CORDEX Ensembles via the User Data Gateway
 
-### Loading
+## Loading via the User Data Gateway
 
 We define the domain of the Iberian Peninsula with the following bounding coordinates:
 
@@ -75,8 +79,28 @@ lon <- c(-10, 5)
 lat <- c(36, 44)
 ```
 
-Observation data is loaded in the same manner as in example 1 (see [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/devel/2018_climate4R_example1.pdf))
-but considering the domain of the Iberian Peninsula instead of southern Europe.
+The UDG service requires (free) [registration](http://www.meteo.unican.es/udg-wiki) to accept the data policies of the different data providers. Once a valid user name and password have been issued, the authentication must be done within the R session before data loading with function `loginUDG`:
+
+```{r loginudg, eval=FALSE}
+loginUDG(username = "userUDG", password = "pswrdUDG")
+```
+
+If the data is to be loaded from the UDG, we can use function `UDG.datasets` to print the inventory of the available public and harmonized **UDG** datasets, where the name, type and url are specified (see Table 1 in the manuscript). Additionally, we can use the "name" (`UDG.datasets()["name"]`) of the desired dataset instead of passing the complete url to `loadGridData`. If this is the case, we do not need to create a dictionary, since the data is harmonized by default. Nevertheless, we still can use the complete url (`UDG.datasets()["url"]`) to access the data in its original form. 
+
+For example, if we are interested in loading observations from the **E-OBS** dataset at 0.25 degrees resolution we can filter the names returned by `UDG.datasets` passing an appropriate pattern to function `grepl`:
+
+```{r eobs, message=FALSE, warning=FALSE}
+models <- UDG.datasets()
+eobs <- models$name[grepl("E-OBS.*0.25", models$name)]
+```
+
+
+Object `eobs` contains the name of the dataset and is passed to `loadGridData` for loading maximum temperature using the standard name "tasmax" (and without using the dictionary argument, see [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/master/2018_climate4R_example1.pdf)):
+
+```{r login, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE}
+source("/media/maialen/work/WORK/creds")
+```
+
 
 ```{r loadeobs, message=FALSE, warning=FALSE}
 TX <- loadGridData(eobs,
@@ -84,27 +108,17 @@ TX <- loadGridData(eobs,
                          season = 1:12,
                          lonLim = lon,
                          latLim = lat,
-                         years = 1971:2000,
-                         dictionary = "dicEOBS.dic")
-
+                         years = 1971:2000)
 ```
 
-
-#### CORDEX data loading from the UDG
-
-If the data is to be loaded from the UDG, we can use function `UDG.datasets` to print the inventory of available **UDG** datasets, where the name, type and url are specified. In this particular case, we can use the "name" of the desired dataset instead of passing the complete url to `loadGridData`. For example, if we are interested in loading observations from the **E-OBS** dataset [@haylock_european_2008] and porjection data from the **CMIP5**[@taylor_overview_2011] **MPI** model, thus, next we filter the names returned by `UDG.datasets` using an appropriate pattern: 
-
+To load historical CORDEX data for the Iberian Peninsula we also filtered the names in `UDG.datasets()` with an appropriate pattern:
 
 ```{r cordexens, message=FALSE, warning=FALSE}
 models <- UDG.datasets()
-models$name[grepl("EUROCORDEX44.*historical", models$name)]
-ensemble.h <- as.character(models$url[grepl("EUROCORDEX44.*historical", 
-                                            models$name)])[1:6]
+ensemble.h <- models$name[grepl("EUROCORDEX44.*historical", models$name)][1:6]
 ```
 
-```{r, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE}
-source("/media/maialen/work/WORK/creds")
-```
+Unlike the first example of the paper (see [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/master/2018_climate4R_example1.pdf)), here we considered 6 regional climate models (RCMs) from EURO-CORDEX, thus, object `ensemble.h` contains 6 names. Everything can be loaded in a single step by combining function `loadGridData` with `lapply`:
 
 ```{r loadhist, message=FALSE, warning=FALSE}
 TXh.list <- lapply(ensemble.h, function(x) 
@@ -113,36 +127,46 @@ TXh.list <- lapply(ensemble.h, function(x)
                               season = 1:12,
                               lonLim = lon,
                               latLim = lat,
-                              years = 1971:2000,
-                              dictionary = "dicCDX.dic"))
+                              years = 1971:2000))
 ```
 
+We repeat the operation for the RCP8.5 scenario:
+
 ```{r loadrcp, message=FALSE, warning=FALSE}
-ensemble.f <- as.character(models$url[grepl("EUROCORDEX44.*rcp85", models$name)])[1:6]
+ensemble.f <- as.character(models$name[grepl("EUROCORDEX44.*rcp85", models$name)])[1:6]
 TXf.list <- lapply(ensemble.f, function(x) 
                           loadGridData(dataset = x,
                           var = "tasmax",
                           season = 1:12,
                           lonLim = lon,
                           latLim = lat,
-                          years = 2071:2100,
-                          dictionary = "dicCDX.dic"))
+                          years = 2071:2100))
 ```
 
-### Data transformation
+As a result, we obtain the following harmonized grids:
 
-#### Spatial and temporal consistency among members:
+* `TX`: a single grid for E-OBS and reference period 1971-2000
+* `TXh.list`: a list of 6 grids for the reference period 1971-2000 (historical scenario)
+* `TXf.list`: a list of 6 grids for the future period 2071-2100 (RCP8.5 scenario).
 
 
+## Working with multi-model ensembles
+
+climate4R functionalities allow working with model ensembles through the `member` dimension. Thus, we can aggregate the list of `grid`s created before (`TXh.list` and `TXf.list`) along the `member` dimension to obtain a single `grid`. However, we need to check temporal and spatial consistency among the different models. In this case, a temporal inconsistency exists in our ensemble, since two of the models contain less calendar days. We can check this easily with function `getShape`:
+
+```{r checkintersecttime, message=FALSE, warning=FALSE}
+lapply(TXh.list, function(x) getShape(x))
+```
+
+Function `intersectGrid.time` performs time subsetting of a collection of grids, to the dates they have in common:
 
 ```{r intersecttime, message=FALSE, warning=FALSE}
 # Temporal intersection
-lapply(TXh.list, function(x) getShape(x))
 TXh.list <- do.call("intersectGrid.time", list(TXh.list, which.return = 1:6)) 
 TXf.list <- do.call("intersectGrid.time", list(TXf.list, which.return = 1:6)) 
 ```
 
-Interpolate to eobs:
+If there is not spatial consistency, we can use `interpGrid` to interpolate all `grid`s to the same spatial structure. Despite this not being the case, here we perform interpolation of CORDEX data to the E-OBS spatial grid in order to apply a land-sea mask (by means of function `gridArithmetics`) and produce comparable map figures.
 
 ```{r interp, message=FALSE, warning=FALSE}
 # Interpolation 
@@ -151,6 +175,7 @@ TXf.list <- lapply(TXf.list, function(x) interpGrid(x, getGrid(TX)))
 ```
 
 ```{r applymask, message=FALSE, warning=FALSE}
+# Create mask
 m <- TX$Data[1,,]*0
 mask.hist <- array(dim = c(getShape(TXh.list[[1]])["time"], dim(m)))
 for (i in 1:dim(mask.hist)[1]) mask.hist[i,,] <- m 
@@ -164,9 +189,7 @@ TXf.list <- lapply(TXf.list, function(x)
   gridArithmetics(x, mask.rcp, operator = "+"))
 ```
 
-
-
-#### Create a multimember grid:
+Finally, we crate the multi-member grids for the historical and RCP8.5 scenarios of CORDEX (objects `TXh.ens` and `TXf.ens`):
 
 ```{r multimember, message=FALSE, warning=FALSE}
 # Create a multimember grid
@@ -174,7 +197,7 @@ TXh.ens <- do.call("bindGrid.member", TXh.list)
 TXf.ens <- do.call("bindGrid.member", TXf.list)
 ```
 
-Note that spatialPlot recognizes a multi-member grid and displays a map for each member:
+Note that function `spatialPlot` recognizes a multi-member grid and displays a map for each member. For instance, next we plot the ensemble of the RCP8.5 scenario to generate Figure \ref{fig:fig8a} (Fig. 8(above) in the manuscript)):
 
 ```{r fig8a, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8a}Maximum temperature (ºC) in Iberia for an ensemble of 6 CORDEX RCMs under the RCP8.5 scenario and for future period 2071-2100. Fig. 8(above) in the manuscript."}
 spatialPlot(climatology(TXf.ens), at = seq(5, 33, 1), backdrop.theme = "countries",
@@ -182,11 +205,7 @@ spatialPlot(climatology(TXf.ens), at = seq(5, 33, 1), backdrop.theme = "countrie
 ```
 
 
-Temporal plot
-
-
-calculate bias for maximum temperature
-
+In order to calculate the bias of each model with respect to the observations and generate Figure \ref{fig:fig8b} (Fig. 8(below) in the manuscript) we apply function `aggregateGrid`, `gridArithmetics`, `bindGridMember` and `spatialPlot` as follows:
 
 ```{r calcbias, message=FALSE, warning=FALSE}
 # Create a multimember grid
@@ -213,13 +232,14 @@ spatialPlot(climatology(TXh.bias.ens), at = seq(-10, 10, 1), backdrop.theme = "c
 ```
 
 
-We can use aggregateGrid to for example calculate the multimember mean and deviation
+We can use function `aggregateGrid` to for example calculate the multi-member mean and deviation of the ensemble:
 
 ```{r aggrmeansd, message=FALSE, warning=FALSE}
 TXf.ens.mean <- aggregateGrid(TXf.ens, aggr.mem = list(FUN = mean, na.rm = TRUE))
 TXf.ens.sd <- aggregateGrid(TXf.ens, aggr.mem = list(FUN = sd, na.rm = TRUE))
 ```
 
+Next we generate the corresponding Figures \ref{fig:fig8c} and \ref{fig:fig8d} (Not shown in the manuscript).
 
 ```{r fig8c, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8c} Ensemble mean of maximum temperature (ºC) in Iberia for  6 CORDEX RCMs under the RCP8.5 scenario and for future period 2071-2100. Not shown in the manuscript."}
 spatialPlot(climatology(TXf.ens.mean), at = seq(5, 33, 1),
@@ -231,17 +251,22 @@ spatialPlot(climatology(TXf.ens.sd), at = seq(0, 6, .5),
 ```
 
 
-### ETCCDI index calculation from raw data
+## ETCCDI index calculation (SU) from raw data
 
+Next the raw SU index (summer days) is calculated for the whole ensemble (object `SUf.ens`) and future period 2071-2100, in a single line with function `climdexGrid`:
 
 ```{r climdexraw, message=FALSE, warning=FALSE}
 SUf.ens <- climdexGrid(tx = TXf.ens, index.code = "SU")
 ```
 
+We calculate the ensemble mean and deviation using function `aggregateGrid`:
+
 ```{r aggrmeansdSU, message=FALSE, warning=FALSE}
 SUf.ens.mean <- aggregateGrid(SUf.ens, aggr.mem = list(FUN = mean, na.rm = TRUE))
 SUf.ens.sd <- aggregateGrid(SUf.ens, aggr.mem = list(FUN = sd, na.rm = TRUE))
 ```
+
+And finally, we plot the results to generate Figures \ref{fig:fig6above1} and \ref{fig:fig6above2} (Figs. 6(above, left) and 6(above, right) in the manuscript:
 
 ```{r fig6above1, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6above1} Summer days in Iberia for the future period 2071-2100 computed from the original RCM daily maximum temperature data. The figure shows the ensemble mean. Fig. 6(above, left) in the manuscript."}
 spatialPlot(climatology(SUf.ens.mean), backdrop.theme = "countries", 
@@ -253,8 +278,10 @@ spatialPlot(climatology(SUf.ens.sd), set.max = 50, backdrop.theme = "countries",
 ```
 
 
-### Bias correction
-15 min operation
+## Bias correction of the maximum temperature
+
+Here we apply Empirical Quantile Mapping (EQM) for correcting the bias of each ensemble member (by default argument `join.members = FALSE`) by considering a moving correction window of 30 days to correct each 7-day time interval:
+
 ```{r biascorrectTX, message=FALSE, warning=FALSE}
 TXf.ens.bc <- biasCorrection(TX, 
                               TXh.ens, 
@@ -264,11 +291,14 @@ TXf.ens.bc <- biasCorrection(TX,
                               method = "eqm")
 ```
 
+As done before, we calculate the ensemble mean and deviation of the maximum temperature with function `aggregateGrid`:
 
 ```{r aggrmeansedBC, message=FALSE, warning=FALSE}
 TXf.ens.bc.mean <- aggregateGrid(TXf.ens.bc, aggr.mem = list(FUN = mean, na.rm = TRUE))
 TXf.ens.bc.sd <- aggregateGrid(TXf.ens.bc, aggr.mem = list(FUN = sd, na.rm = TRUE))
 ```
+
+We plot the results to generate Figures \ref{fig:fig8e} and \ref{fig:fig8f} (Not shown in the manuscript):
 
 ```{r fig8e, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8e} Ensemble mean of bias corrected maximum temperature (ºC) in Iberia for  6 CORDEX RCMs under the RCP8.5 scenario and for future period 2071-2100. Not shown in the manuscript."}
 spatialPlot(climatology(TXf.ens.bc.mean), backdrop.theme = "countries", 
@@ -279,21 +309,22 @@ spatialPlot(climatology(TXf.ens.bc.sd), backdrop.theme = "countries",
             at = seq(0, 6, .5), col.regions = colorRampPalette(colssd))
 ```
 
+## ETCCDI index calculation (SU) from bias corrected data
 
-
-
-
-### ETCCDI index calculation from bias corrected data
-
+Next we apply function `climdexGrid` over the bias corrected maximum temperature (object `TXf.ens.bc`) to obtain the corrected SU index for the future period.
 
 ```{r climdexBC, message=FALSE, warning=FALSE}
 SUf.ens.bc <- climdexGrid(tx = TXf.ens.bc, index.code = "SU")
 ```
 
+Again, the ensemble mean and deviation is calculated:
+
 ```{r aggrmeansdSUbc, message=FALSE, warning=FALSE}
 SUf.ens.bc.mean <- aggregateGrid(SUf.ens.bc, aggr.mem = list(FUN = mean, na.rm = TRUE))
 SUf.ens.bc.sd <- aggregateGrid(SUf.ens.bc, aggr.mem = list(FUN = sd, na.rm = TRUE))
 ```
+
+By plotting these results Figures \ref{fig:fig6below1} and \ref{fig:fig6below2} are generated (Figs. 6(below, left) and 6(below, right) in the manuscript):
 
 ```{r fig6below1, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6below1} Summer days in Iberia for the future period 2071-2100 computed from the bias corrected RCM daily maximum temperature data. The figure shows the ensemble mean. Fig. 6(below, left) in the manuscript."}
 spatialPlot(climatology(SUf.ens.bc.mean), backdrop.theme = "countries", 
@@ -306,14 +337,15 @@ spatialPlot(climatology(SUf.ens.bc.sd), backdrop.theme = "countries",
 
 
 
-### SU difference corrected non-corrected:
-
+In order to generate Figure \ref{fig:fig7} (Fig. 7 in the manuscript), we next calculate the SU index from observational data (`SU`) and the historical model ensemble (`SUh.ens`):
 
 ```{r climdexSUall, message=FALSE, warning=FALSE}
 #A single location
 SU <- climdexGrid(tx = TX, index.code = "SU")
 SUh.ens <- climdexGrid(tx = TXh.ens, index.code = "SU")
 ```
+
+We also extract the nearest grid box to Zaragoza for E-OBS (object `SU.Z.eobs`) and CORDEX (object `SU.Z.cdx`). The 1rst memeber of CORDEX is also extracted and everything is listed in object `SU.Z` for plotting:
 
 ```{r preparetemporalplot, message=FALSE, warning=FALSE}
 SU.Z.eobs <- subsetGrid(SU, latLim = 41.64, lonLim = -0.89)
@@ -324,6 +356,7 @@ SU.Z.1m <- lapply(SU.Z.cdx, function(x)
 SU.Z <- c(list(SU.Z.eobs), SU.Z.cdx, SU.Z.1m)
 ```
 
+Finally `temporalPlot` is used to generate Figure 7 (Fig. 7 in the manuscript):
 
 ```{r fig7, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig7} Annual summer days time series for a single gridbox (the one closest to Zaragoza, Spain) computed form (red) the original RCM daily maximum temperature data, and (blue) daily maximum temperature bias corrected data using E-OBS (black). When it comes to CORDEX data, continuous lines correspond to the ensemble mean and the shadowed area to the range (uncertainty). Dashed lines correspond to the 1st member of the ensemble. Fig. 7 in the manuscript."}
 cols  <- c("black", rep(c("red", "red", "blue"), 2))
@@ -335,10 +368,10 @@ temporalPlot(SU.Z,
                list(ylim = c(70, 220), ylab = "",
                                   key = list(space = "top", 
                                              lines = list(lty = c(rep(1,4), 3), 
-                                                                         col = c(cols[1:4], cols[1]),
-                                                                         lwd = 0.8), 
+                                                          col = c(cols[1:4], cols[1]),
+                                                          lwd = 0.8), 
                                              text = list(c("E-OBS", "CDX_hist", 
-                                                           "CDX_rcp85", "CDX_rcp85_corrected",
+                                                    "CDX_rcp85", "CDX_rcp85_corrected",
                                                            "1st_member"),
                                                          cex = .7), 
                                              columns = 3, rows = 3)))
@@ -348,23 +381,31 @@ temporalPlot(SU.Z,
 rm(list=c("SU.Z", "SU","SUh.ens","SU.Z.eobs","SU.Z.cdx","SU.Z.1m","SUf.ens.bc.mean","TXh.ens","TXf.ens","TXf.ens.bc"))
 ```
 
-### Calculate other indexes
+## Calculation of the ETCCDI index CDD (Consecutive Dry Days)
+
+This section replicates the procedures shown above but for calculating a precipitation based index, i.e. CDD (consecutive dry days). Function `climdexShow` displays an overview of the available ETCDDI indices:
 
 ```{r showindexes, eval= FALSE, message=FALSE, warning=FALSE}
 climdexShow()[,1:6]
 ```
 
-#### Calculate CDD
+
+### Data loading and multi-member ensemble building
+
+In order to calculate the CDD index, we need to load daily precipitation data. Therefore, we repeat the loading operation (function `loadGridData`) shown in the previous section (this time `var = "pr"`) for observational data (E-OBS) and historical and RCP8.5 projection data (6 models from CORDEX).
 
 ```{r authenticationhide2, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE}
 source("/media/maialen/work/WORK/creds")
 ```
 
-```{r eobsurlupdate, message=FALSE, warning=FALSE}
+
+
+```{r eobsurlupdate, message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
 eobs.pr<-"http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/rr_0.25deg_reg_v16.0.nc"
 ```
 
-```{r dicupdate, message=FALSE, warning=FALSE, eval=FALSE}
+
+```{r dicupdate, message=FALSE, warning=FALSE, eval=FALSE, echo=FALSE}
 write(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,cell_method,
         offset,scale,deaccum,derived,interface",
              "tasmax,tx,24h,0,24,max,0,1,0,0,",
@@ -372,16 +413,15 @@ write(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,cell_
 ```
 
 ```{r loadpreobs, message=FALSE, warning=FALSE}
-pr <- loadGridData(eobs.pr,
+pr <- loadGridData(eobs,
                          var = "pr",
                          season = 1:12,
                          lonLim = lon,
                          latLim = lat,
-                         years = 1971:2000,
-                         dictionary = "dicEOBS.dic")
+                         years = 1971:2000)
 ```
 
-```{r dicupdateCDX, message=FALSE, warning=FALSE, eval=FALSE}
+```{r dicupdateCDX, message=FALSE, warning=FALSE, eval=FALSE, echo=FALSE}
 write(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,cell_method,
         offset,scale,deaccum,derived,interface",
              "tasmax,tasmax,24h,0,24,max,-273.15,1,0,0,",
@@ -395,22 +435,21 @@ prh <- lapply(ensemble.h, function(x)
                               season = 1:12,
                               lonLim = lon,
                               latLim = lat,
-                              years = 1971:2000,
-                              dictionary = "dicCDX.dic"))
+                              years = 1971:2000))
 prf <- lapply(ensemble.f, function(x) 
                           loadGridData(dataset = x,
                           var = "pr",
                           season = 1:12,
                           lonLim = lon,
                           latLim = lat,
-                          years = 2071:2100,
-                          dictionary = "dicCDX.dic"))
+                          years = 2071:2100))
 prh.t <- do.call("intersectGrid.time", list(prh, which.return = 1:6)) 
 prf.t <- do.call("intersectGrid.time", list(prf, which.return = 1:6)) 
 prh.ens <- do.call("bindGrid.member", prh.t)
 prf.ens <- do.call("bindGrid.member", prf.t)
 ```
 
+Next the CDD index is calculated (function `climdexGrid`), and regridded (function `interpGrid`) to the spatial structure given by the observational data (`getGrid(pr)`). Then, the ensemble mean (object `CDDf.ens.mean`) and deviation (object `CDDf.ens.sd`) are calculated with `aggregateGrid`.
 
 ```{r climdexinterpaggrmask, warning=FALSE, message=FALSE}
 CDDf.ens <- climdexGrid(pr = prf.ens, index.code = "CDD")
@@ -419,7 +458,11 @@ CDDf.ens.mean <- aggregateGrid(CDDf.ens.interp,
                                aggr.mem = list(FUN = "mean", na.rm = TRUE))
 CDDf.ens.sd <- aggregateGrid(CDDf.ens.interp, 
                              aggr.mem = list(FUN = "sd", na.rm = TRUE))
+```
 
+We also create and apply the land-sea mask:
+
+```{r cddapplymask, warning=FALSE, message=FALSE}
 m <- pr$Data[1,,]*0
 mask.cdd <- array(dim = c(getShape(CDDf.ens.mean)["time"], dim(m)))
 for (i in 1:dim(mask.cdd)[1]) mask.cdd[i,,] <- m 
@@ -427,7 +470,7 @@ CDDf.ens.mean <- gridArithmetics(CDDf.ens.mean, mask.cdd, operator = "+")
 CDDf.ens.sd <- gridArithmetics(CDDf.ens.sd, mask.cdd, operator = "+")
 ```
 
-
+Finally, we plot the result with function `spatialPlot` to generate Figures \ref{fig:fig9} and \ref{fig:fig10} (not shown in the manuscript).
 
 ```{r fig9, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig9} Consecutive dry days (CDD) in Iberia for the future period 2071-2100 computed from raw RCM daily precipitation data. The figure shows the the ensemble mean. Not shown in the manuscript."}
 spatialPlot(climatology(CDDf.ens.mean), backdrop.theme = "countries", at = seq(0, 60, 5), 
@@ -437,6 +480,10 @@ spatialPlot(climatology(CDDf.ens.mean), backdrop.theme = "countries", at = seq(0
 spatialPlot(climatology(CDDf.ens.sd), backdrop.theme = "countries", at = seq(0, 60, 5), 
             col.regions = colorRampPalette(colssd))
 ```
+
+### Bias correction of the precipitation
+
+Here, we use again the EQM method for bias correcting precipitation data to subsequently calculate the corrected CDD index (objects `CDDf.ens.bc`, `CDDf.ens.bc.mean`, `CDDf.ens.bc.sd`).
 
 ```{r biascorrclimdexmemaggr, warning=FALSE, message=FALSE}
 prf.ens.bc <- biasCorrection(y = pr, 
@@ -454,7 +501,7 @@ CDDf.ens.bc.sd <- aggregateGrid(CDDf.ens.bc,
                                 aggr.mem = list(FUN = "sd", na.rm = TRUE))
 ```
 
-
+This results are plotted to generate Figures \ref{fig:fig11} and \ref{fig:fig12} (not shown in the manuscript):
 
 ```{r fig11, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig11} Consecutive dry days (CDD) in Iberia for the future period 2071-2100 computed from bias corrected RCM daily precipitation data. The figure shows the the ensemble mean. Not shown in the manuscript."}
 spatialPlot(climatology(CDDf.ens.bc.mean), backdrop.theme = "countries", 
@@ -466,5 +513,17 @@ spatialPlot(climatology(CDDf.ens.bc.sd), backdrop.theme = "countries",
             at = seq(0, 60, 5), col.regions = colorRampPalette(colssd))
 ```
 
+In this case, unlike the SU index, the uncertainty is not reduced before and after bias correcting the original variable (compare Figs. \ref{fig:fig10} and \ref{fig:fig12}). Nevertheless the pattern of the index is significantly modified (compare Figs. \ref{fig:fig9} and \ref{fig:fig11}).
+
+# Other available material
+
+* [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/devel/2018_climate4R_example1.pdf) contains the full code for **Example 1** of the paper `climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction'.
+
+* Find more worked examples on the utilization of climate4R packages in their respective GitHub **wiki**-s at [https://github.com/SantanderMetGroup](https://github.com/SantanderMetGroup):
+
+    + [loadeR: https://github.com/SantanderMetGroup/loadeR/wiki](https://github.com/SantanderMetGroup/loadeR/wiki)
+    + [transformeR: https://github.com/SantanderMetGroup/transformeR/wiki](https://github.com/SantanderMetGroup/transformeR/wiki)
+    + [downscaleR: https://github.com/SantanderMetGroup/downscaleR/wiki](https://github.com/SantanderMetGroup/downscaleR/wiki)
+    + [visualizeR: https://github.com/SantanderMetGroup/visualizeR/wiki](https://github.com/SantanderMetGroup/visualizeR/wiki) 
 
 
