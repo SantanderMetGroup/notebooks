@@ -406,14 +406,17 @@ rm(list = c("TX","TXh", "TXf", "TXf.bc", "SUf", "SUf.bc"))
 
 \newpage
 
-***
-NOTE: Find more worked examples on the utilization of climate4R packages in their respective GitHub **wiki**-s at [https://github.com/SantanderMetGroup](https://github.com/SantanderMetGroup):
 
-* [loadeR: https://github.com/SantanderMetGroup/loadeR/wiki](https://github.com/SantanderMetGroup/loadeR/wiki)
-* [transformeR: https://github.com/SantanderMetGroup/transformeR/wiki](https://github.com/SantanderMetGroup/transformeR/wiki)
-* [downscaleR: https://github.com/SantanderMetGroup/downscaleR/wiki](https://github.com/SantanderMetGroup/downscaleR/wiki)
-* [visualizeR: https://github.com/SantanderMetGroup/visualizeR/wiki](https://github.com/SantanderMetGroup/visualizeR/wiki) 
+# Other available material
 
-***
+* [2018_climate4R_example2.pdf](https://github.com/SantanderMetGroup/notebooks/blob/devel/2018_climate4R_example2.pdf) contains the full code for **Example 2** of the paper `climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction'.
+
+* Find more worked examples on the utilization of climate4R packages in their respective GitHub **wiki**-s at [https://github.com/SantanderMetGroup](https://github.com/SantanderMetGroup):
+    + [loadeR: https://github.com/SantanderMetGroup/loadeR/wiki](https://github.com/SantanderMetGroup/loadeR/wiki)
+    + [transformeR: https://github.com/SantanderMetGroup/transformeR/wiki](https://github.com/SantanderMetGroup/transformeR/wiki)
+    + [downscaleR: https://github.com/SantanderMetGroup/downscaleR/wiki](https://github.com/SantanderMetGroup/downscaleR/wiki)
+    + [visualizeR: https://github.com/SantanderMetGroup/visualizeR/wiki](https://github.com/SantanderMetGroup/visualizeR/wiki) 
+
+
 
 
