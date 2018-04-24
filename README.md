@@ -1,2 +1,2 @@
 # notebooks
-Auxiliary meterial of SantanderMetGroup papers
+Auxiliary material of SantanderMetGroup papers
