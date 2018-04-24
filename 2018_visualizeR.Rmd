@@ -1,6 +1,6 @@
 ---
-title: 'visualizeR: communication and visualization of unceratinties in seasonal climate prediction'
-subtitle: 'Companion examples to the paper by Frias _et al._ 2018 in Environmental Modelling \& Software <br> DOI:10.1016/j.envsoft.2017.09.008'
+title: 'visualizeR: communication and visualization of uncertainty in seasonal climate prediction'
+subtitle: 'Companion examples to the paper by Frias _et al._ 2018 in Environmental Modelling \& Software <br> <DOI:10.1016/j.envsoft.2017.09.008>'
 author: "Santander Meteorology Group"
 date: "07 de Sep 2017"
 output:
