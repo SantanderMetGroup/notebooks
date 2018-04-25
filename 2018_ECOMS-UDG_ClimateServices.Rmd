@@ -5,14 +5,14 @@ author: Antonio Cofiño, Joaquín Bedia, Maialen Iturbide, Manuel Vega, Sixto He
   Jesús Fernández, M. Dolores Frías, Rodrigo Manzanas & Jose Manuel Gutiérrez
 date: "18/07/2017"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     highlight: pygments
     number_sections: yes
     theme: readable
     toc: yes
     toc_float: yes
-  pdf_document:
-    toc: yes
 documentclass: article
 subtitle: Companion R examples of the paper published in Climate Services (2018, [DOI:10.1016/j.cliser.2017.07.001](https://doi.org/10.1016/j.cliser.2017.07.001))
 abstract: In this document we present the code that reproduces the analyses presented
@@ -209,14 +209,15 @@ After data loading, the NAO-Index can be calculated in two simple steps using th
   1. The anomalies are computed using `rescaleGrid` with its default arguments:
 
 ```{r,message=FALSE}
-psl.anom <- rescaleGrid(grid = ncep.psl)
+psl.anom <- localScaling(grid = ncep.psl)
 ```
 
   2. The EOFs (in this case only the first one) are computed using the `prinComp` function, and then plotted with `plotEOF`:
 
 ```{r,fig.align='center',fig.width=6,message=FALSE}
 pca1 <- prinComp(psl.anom, n.eofs = 1)
-plotEOF(pca1, var = "psl", n.eofs = 1)
+plotEOF(pca1, var = "psl", n.eofs = 1, backdrop.theme = "coastline",
+        main = "Leading EOF of MSLP anomaly")
 ```
 
 The next lines of code extract the leading PC as a time-series grid, and plots it as a NAO-index time series (see [this link](https://climatedataguide.ucar.edu/sites/default/files/styles/node_lightbox_display/public/key_figures/climate_data_set/nao_pc_djf_2.gif?itok=rVOww1Wi) for a visual comparison with Hurrel's PC-based NAO-Index).
@@ -247,7 +248,7 @@ Next, the same steps than in Sec. 1.2.1. are followed:
   1. Anomaly calculation 
 
 ```{r,message=FALSE}
-psl.cfs.anom <- rescaleGrid(psl.cfs.interp)
+psl.cfs.anom <- localScaling(psl.cfs.interp)
 ```
 
   2. PC calculation. In this case, the PCs are obtained using the NCEP EOF previously calculated, using the function `grid2PCs` as follows:
