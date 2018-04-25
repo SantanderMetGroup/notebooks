@@ -28,6 +28,7 @@ urlcolor: blue
 options(java.parameters = "-Xmx8000m")
 ```
 
+
 # Introduction
 
 This worked example contains the full code that reproduces the 2nd example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 6 of the manuscript). The main section is divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting (1) package installation and (2) the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively:
@@ -308,8 +309,6 @@ spatialPlot(climatology(TXf.ens.bc.sd), backdrop.theme = "countries",
             at = seq(0, 6, .5), col.regions = colorRampPalette(colssd))
 ```
 
-
-
 ## ETCCDI index calculation (SU) from bias corrected data
 
 Next we apply function `climdexGrid` over the bias corrected maximum temperature (object `TXf.ens.bc`) to obtain the corrected SU index for the future period.
@@ -390,6 +389,7 @@ This section replicates the procedures shown above but for calculating a precipi
 climdexShow()[,1:6]
 ```
 
+
 ### Data loading and multi-member ensemble building
 
 In order to calculate the CDD index, we need to load daily precipitation data. Therefore, we repeat the loading operation (function `loadGridData`) shown in the previous section (this time `var = "pr"`) for observational data (E-OBS) and historical and RCP8.5 projection data (6 models from CORDEX).
@@ -397,6 +397,7 @@ In order to calculate the CDD index, we need to load daily precipitation data. T
 ```{r authenticationhide2, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE}
 source("/media/maialen/work/WORK/creds")
 ```
+
 
 
 ```{r eobsurlupdate, message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
