@@ -4,12 +4,13 @@ subtitle: "Companion R examples of the paper published in Climate Services (2017
 author: "J. Bedia & M. Iturbide"
 date: "`r Sys.Date()`"
 abstract: |
-  This is a worked example that reproduces the steps followed in Bedia et al. 2017 using the R-package `fireDanger`, that contains functions for computing the different components of the Fire Weather Index System (FWI, van Wagner 1987) from station and numerical climate model data. `fireDanger` is part of the *climate4R* Bundle (see Cofiño et al 2017, in this issue of Climate Services), thus providing a seamless R interface not only to FWI calculation, but also to harmonized climate data access, data transformation, dowscaling / bias correction and other climate analysis tasks via a number of related R packages, some of them succintly described here. In particular, packages `loadeR.ECOMS`, `downscaleR` and `easyVerification` are used for climate data loading, manipulation, bias correction and verification. Furthermore, in the last section of this tutorial we also illustrate the use of different functionalities from the `visualizeR` package for seasonal forecast verification and visualization.
+  This is a worked example that reproduces the steps followed in Bedia et al. 2017 using the R-package `fireDanger`, that contains functions for computing the different components of the Fire Weather Index System (FWI, van Wagner 1987) from station and numerical climate model data.
   
-    The code provided in this example allows the reproducibility of all the analyses presented in the paper. However, for the sake of openness, data from the CFSv2 seasonal model (Saha et al 2010) are used instead of System4 (see the paper), the first being publicly available without restrictions. The reference observations dataset (WFDEI, Weedon et al 2014) is also publicly available.
+  Packages `loadeR.ECOMS`, `downscaleR` and `easyVerification` are also used for climate data loading, manipulation, bias correction and verification. Furthermore, in the last section of this tutorial we also illustrate the use of different functionalities from the `visualizeR` package for seasonal forecast verification and visualization.
+  
+  The code provided in this example allows the reproducibility of all the analyses presented in the paper. However, for the sake of openness, data from the CFSv2 seasonal model (Saha et al 2010) are used instead of System4 (see the paper), the first being publicly available without restrictions. The reference observations dataset (WFDEI, Weedon et al 2014) is also publicly available.
 
-
-output: rmarkdown::html_vignette 
+output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Climate Services paper, 2017. Companion R examples}
   %\VignetteEngine{knitr::rmarkdown}
@@ -96,7 +97,7 @@ library(visualizeR)
 The package `fireDanger` is used for the calculation of the FWI System from the climate data structures provided by the packages above. It is thus seamlessly integrated with the Santander MetGroup R Climate Processing Bundle.
 
 ```{r, eval=FALSE}
-devtools::install_github("SantanderMetGroup/fireDanger@v1.0.3")
+devtools::install_github("SantanderMetGroup/fireDanger@v1.0.2")
 ```
 ```{r}
 library(fireDanger)
@@ -527,7 +528,6 @@ bubblePlot(hindcast = fwimean_hind, obs = fwimean_obs,
 
 * Bedia, J., Herrera, S., Camia, A., Moreno, J.M., Gutierrez, J.M., 2014. Forest Fire Danger Projections in the Mediterranean using ENSEMBLES Regional Climate Change Scenarios. Clim Chang 122, 185--199. doi:10.1007/s10584-013-1005-z
 * Bedia, J., Herrera, S., Gutierrez, J.M., Benali, A., Brands, S., Mota, B., Moreno, J.M., 2015. Global patterns in the sensitivity of burned area to fire-weather: implications for climate change. Agr. Forest Meteorol. 214--215, 369--379. doi:10.1016/j.agrformet.2015.09.002
-* Cofiño A.S., Bedia J., Iturbide M., Vega M., Herrera S., Fernández J., Frías M. D., Manzanas, R. and Gutiérrez J. M., 2017. The ECOMS User Data Gateway: Towards seasonal forecast data provision and research reproducibility in the era of Climate Services. Climate Services, in press.
 * Saha, S., Moorthi, S., Wu, X., Wang, J., Nadiga, S., Tripp, P., Behringer, D., Hou, Y.-T., Chuang, H., Iredell, M., Ek, M., Meng, J., Yang, R., Peña Mendez, M., van den Dool, H., Zhang, Q., Wang, W., Chen, M., Becker, E., 2013. The NCEP Climate Forecast System Version 2. J Clim 130925135638001. doi:10.1175/JCLI-D-12-00823.1
 * van Wagner, C.E., 1987. Development and structure of the Canadian Forest Fire Weather Index (Forestry Tech. Rep. No. 35). Canadian Forestry Service, Ottawa, Canada.
 * Weedon, G.P., Balsamo, G., Bellouin, N., Gomes, S., Best, M.J., Viterbo, P., 2014. The WFDEI meteorological forcing data set: WATCH Forcing Data methodology applied to ERA-Interim reanalysis data. Water Resour. Res. 50, 7505–7514. doi:10.1002/2014WR015638
