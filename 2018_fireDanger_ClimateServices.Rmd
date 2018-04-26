@@ -1,21 +1,23 @@
 ---
 title: "Seasonal Predictions of Fire Weather Index: Paving the Way for their operational applicability in Mediterranean Europe"
-subtitle: "Companion R examples of the paper published in Climate Services (2017, DOI:10.1016/j.cliser.2017.04.001)"
 author: "J. Bedia & M. Iturbide"
-date: "`r Sys.Date()`"
-abstract: |
-  This is a worked example that reproduces the steps followed in Bedia et al. 2017 using the R-package `fireDanger`, that contains functions for computing the different components of the Fire Weather Index System (FWI, van Wagner 1987) from station and numerical climate model data.
-  
-  Packages `loadeR.ECOMS`, `downscaleR` and `easyVerification` are also used for climate data loading, manipulation, bias correction and verification. Furthermore, in the last section of this tutorial we also illustrate the use of different functionalities from the `visualizeR` package for seasonal forecast verification and visualization.
-  
-  The code provided in this example allows the reproducibility of all the analyses presented in the paper. However, for the sake of openness, data from the CFSv2 seasonal model (Saha et al 2010) are used instead of System4 (see the paper), the first being publicly available without restrictions. The reference observations dataset (WFDEI, Weedon et al 2014) is also publicly available.
-
-output: pdf_document
-vignette: >
-  %\VignetteIndexEntry{Climate Services paper, 2017. Companion R examples}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+date: "26/04/2018"
+encoding: "UTF8"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: readable
+    toc: yes
+    toc_float: yes
+documentclass: article
+subtitle: "Companion R examples of the paper published in Climate Services (2018, [DOI:10.1016/j.cliser.2017.04.001]((https://doi.org/10.1016/j.cliser.2017.04.001)))"
+abstract:   This is a worked example that reproduces the steps followed in Bedia _et al._ 2018 using the R-package `fireDanger`, that contains functions for computing the different components of the Fire Weather Index System (FWI, van Wagner 1987) from station and numerical climate model data, as part of the [climate4R framework](http://www.meteo.unican.es/climate4r). Packages `loadeR.ECOMS`, `downscaleR` and `easyVerification` are also used for climate data loading, manipulation, bias correction and verification. Furthermore, in the last section of this tutorial we also illustrate the use of different functionalities from the `visualizeR` package for seasonal forecast verification and visualization. <br> The code provided in this example allows the reproducibility of all the analyses presented in the paper. However, for the sake of openness, data from the CFSv2 seasonal model (Saha _et al._ 2010) are used instead of ECMWF's System4 (see the paper), the former being publicly available without restrictions. The reference observations dataset (WFDEI, Weedon _et al._ 2014) is also publicly available.
 ---
+
+
 
 
 ```{r setup, include=FALSE}
@@ -23,29 +25,27 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.align = "center",
                       fig.width = 7.5,
                       fig.asp = 1,
-                      fig.path = 'figure/graphics-',
                       message = FALSE,
                       tidy = FALSE,
-                      cache = FALSE,
-                      cache.path = 'cache/graphics-')
+                      cache = TRUE)
 ```
 
  
 # Installing the packages
 
-The R packages used in this example are available through their respective public GitHub repositories. In order to avoid problems derived from version changes (all packages are currently under current development and some of the features can be expected to change in the near future), it is recommended to install the "tagged" versions used to run these examples.
+The R packages used in this example are available through their respective public GitHub repositories. In order to avoid problems derived from version changes (all packages are currently under current development and some of the features can be expected to change in the near future), it is recommended to install the "tagged" versions used to run these examples. Another possibility is to check the Session Information section at the end of this notebook, where the package versions used to compile the notebook are displayed.
 
 To this aim, the usage of function `install_github` from the `devtools` package is recommended. The specific package versions can be installed using the `@` symbol followed by the version tag label. Note that the most recent stable releases of the different packages are available through the master branch. In this case, the `@master` suffix should be used.
 
-## Installing the R Climate Processing Bundle from the Santander MetGroup
+## Installing the climate4R bundle from the Santander MetGroup
 
-This is a bundle of packages developed by the [Santander Meteorology Group](http://www.meteo.unican.es) (University of Cantabria, Spain), that loads climate datasets from local or remote (e.g. OPeNDAP) data servers and performs climate data transformation and post-processing, including statistical downscaling, bias correction, visualization and verification. The emphasis has been done on simplicity from the user perspective, while many advanced features are available for advanced users. Other key features inspiring its design have been extensibility (it is easy to link other packages for other climate-realted analysis, for instance FWI calculation using `fireDanger`) and efficiency (e.g., parallelization options are available in many functions). The following packages compose the bundle:
+[climate4R](http://www.meteo.unican.es/climate4r) is a bundle of packages developed by the Santander Meteorology Group (University of Cantabria, Spain), that loads climate datasets from local or remote (e.g. OPeNDAP) data servers and performs climate data transformation and post-processing, including statistical downscaling, bias correction, visualization and verification. The emphasis has been done on simplicity from the user perspective, while many sophisticated features are available for advanced users. Other key features inspiring its design have been extensibility (it is easy to link other packages for other climate-realted analysis, for instance FWI calculation using `fireDanger`) and efficiency (e.g., parallelization options are available in many functions). The following core packages compose the bundle:
 
  * `loadeR`: tools for climate data loading from local or remote locations
- * `loadeR.ECOMS`: a loadeR extension to access the Santander MetGroup [User Data Gateway](http://www.meteo.unican.es/ecoms-udg) for the ECOMS Project
+ * `loadeR.ECOMS`: a loadeR extension to access the Santander MetGroup [User Data Gateway](http://www.meteo.unican.es/ecoms-udg) for the ECOMS Project, allowing easy access to different seasonal forecast datasets. See Cofiño _et al._ (2018) for further details.
  * `transformeR`: climate data analysis and transformation
  * `downscaleR`: statistical downscaling and bias correction methods
- * `visualizeR`: tools for seasonal forecast verification and visualization
+ * `visualizeR`: tools for seasonal forecast verification and visualization. See Frías _et al._ (2018) for more details
  * Other packages. These are not used in this example, but other utilities exist like for instance [`loadeR.2nc`](https://github.com/SantanderMetGroup/loadeR.2nc) for exporting R climate data structures into CF-compliant netCDF4 files.
  
 In this example, we will first illustrate the use of `loadeR.ECOMS`, required for accessing the OPeNDAP server from the Santander MetGroup , storing a number of seasonal forecast datasets and variables in the so called User Data Gateway, described in the next sections. A number of dependencies are installed, although only `loadeR.ECOMS` is explicitly loaded by the user.
@@ -94,7 +94,7 @@ library(visualizeR)
 
 ## Installing fireDanger
 
-The package `fireDanger` is used for the calculation of the FWI System from the climate data structures provided by the packages above. It is thus seamlessly integrated with the Santander MetGroup R Climate Processing Bundle.
+The package `fireDanger` is used for the calculation of the FWI System from the climate data structures provided by the packages above. It is thus seamlessly integrated within the `climate4R` framework.
 
 ```{r, eval=FALSE}
 devtools::install_github("SantanderMetGroup/fireDanger@v1.0.2")
@@ -105,7 +105,7 @@ library(fireDanger)
 
 ## Other packages
 
-Package `easyVerification` (MeteoSwiss 2017) provides convenient functions for the verification of large ensemble forecast datasets, as the ones used in this paper. We use this package to calculate some of the verification measures used in the article (ROC area, ensemble correlation etc.). `easyVerification` is available on CRAN.
+Package `easyVerification` (MeteoSwiss 2017) provides convenient functions for the verification of large ensemble forecast datasets, as the ones used in this paper. We use this package to calculate some of the verification measures used in the article (ROC area, ensemble correlation etc.). `easyVerification` is available in the CRAN repository:
 
 ```{r, eval=FALSE}
 install.packages("easyVerification")
@@ -114,7 +114,7 @@ install.packages("easyVerification")
 library(easyVerification)
 ```
 
-Similarly, the `RColorBrewer` library is required in order to customize the FWI map palette according to the color scheme presented in Bedia et al (2015) and in the present paper.
+Similarly, the `RColorBrewer` library is required in order to customize the FWI map palette according to the color scheme presented in Bedia _et al._ (2015) and in this paper.
 
 ```{r, eval=FALSE}
 install.packages("RColorBrewer")
@@ -147,7 +147,7 @@ loginUDG(username = "myuser", password = "mypassword")
 
 ### Loading seasonal forecast data
 
-Next we are loading the variables needed for computing the FWI with function `loadECOMS`. For brevity, we will consider a smaller spatio-temporal domain studied in the paper. In this case, we will develop the example using the NCEP's CFS-v2 hindcast instead of ECMWF System4, as the former is a public product, while System4 has restricted access. A 27-year hindcast period for CFSv2 is considered (1983-2009).
+Next we are loading the variables needed for computing the FWI with function `loadECOMS`. For brevity, we will consider a smaller spatio-temporal domain than the one studied in the paper. In this case, we will develop the example using the NCEP's CFS-v2 hindcast instead of ECMWF System4, as the former is a public product, while System4 has restricted access. A 27-year hindcast period for CFSv2 is considered (1983-2009).
 
 A few arguments are used to unequivocally define the seasonal forecast request (type `?load.ECOMS` for details):
 
@@ -163,7 +163,7 @@ members <- 1:15
 
 Note that in order to reproduce the paper results (based on System 4), the argument dataset should be set to `dataset = "System4_seasonal_15"`, leaving the rest of commands and instructions unchanged. Thus, the `loadeR.ECOMS` package has been conceived as "user-transparent", in the sense that the users do not need to worry about the technical complexities regarding member definition (see e.g. [how CFS-v2 members have been defined](http://meteo.unican.es/trac/wiki/udg/ecoms/dataserver/datasets/CFSv2)) and/or the different variable naming and units. In addition, the `aggr.d` argument allows to perform time aggregation of sub-daily variables on-the-fly, as required for instance to calculate daily accumulated precipitation from the 6-hourly flux (CFSv2 model). For instantaneous variables, the argument `time` would be set to the corresponding verification time (e.g. `time="12"` for 12 UTC verifying records). This ensures the maximum reproducibility of the results, that may be altered to some extent depending on the various aggregation options and/or unit transformations.
 
-In this example, we will use aggregated data to illustrate this capability. This would be the proxy-based approach for the calculation of FWI used for the generation of the state-of-the-art future FWI projections for Europe (Bedia et al 2014).
+In this example, we will use aggregated data to illustrate this capability. This would be the proxy-based approach for the calculation of FWI used for the generation of the state-of-the-art future FWI projections for Europe (Bedia _et al._ 2014).
 
 The argument `leadMonth` indicates the initialization time of the predictions. This argument and the argument `season` (in months, from 1 to 12), unequivocally define the initialization time and the corresponding verification times to be chosen. In addition, the argument `years` indicates the whole analysis period. So, in this particular case, we are loading the May initialization (`leadMonth = 0` and `season = 5:9`), since the starting day (1 May) until the end of the target season (30 September). Note that the fire season considered in the paper is June-September (JJAS), but the predictions for May are also considered in order to compute FWI a few weeks before the start of the season as a spin-up period for FWI stabilization (see Sec. 2.1 in the paper).
 
@@ -196,7 +196,7 @@ W <- loadECOMS(dataset, var = "wss", members = members,
 The climatologies can be inspected with function `plotClimatology` and `climatology`. For example:
 
 ```{r, echo = FALSE}
-load("../ignore/vignette_data/Tm_hind.rda")
+load("./vignette_data/Tm_hind.rda")
 ```
 
 
@@ -257,6 +257,8 @@ And multigrid creation:
 multigrid_obs <- makeMultiGrid(Tm.obs, H.obs, r.obs, W.obs)
 ```
 
+*** 
+
 ### Direct load of the climate data objects above (shortcut)
 
 In order to facilitate data exploration, the seasonal forecast and observations data (`multrigrid_hind` and `multigrid_obs`) can be directly loaded into the R session through the following links:
@@ -267,9 +269,11 @@ load(url("http://www.meteo.unican.es/work/fireDanger/wiki/data/multigrid_obs.rda
 ```
 
 ```{r, echo= FALSE}
-load("../ignore/vignette_data/multigrid_obs.rda")
-load("../ignore/vignette_data/multigrid_hind.rda")
+load("./vignette_data/multigrid_obs.rda")
+load("./vignette_data/multigrid_hind.rda")
 ```
+
+***
 
 # FWI calculation
 
@@ -284,7 +288,7 @@ obs <- fwiGrid(multigrid = multigrid_obs)
 ```
 
 ```{r, message = FALSE, echo = FALSE}
-load("../ignore/vignette_data/obs.rda")
+load("./vignette_data/obs.rda")
 ```
 
 ## Seasonal Forecast Hindcast
@@ -298,7 +302,7 @@ mask <- interpGrid(cfs_mask, getGrid(multigrid_hind))
 
 
 ```{r, echo = FALSE, warning = FALSE, message=FALSE}
-load("../ignore/vignette_data/cfs_mask.rda")
+load("./vignette_data/cfs_mask.rda")
 mask <- interpGrid(cfs_mask, getGrid(multigrid_hind))
 ``` 
 
@@ -309,7 +313,7 @@ hindcast <- fwiGrid(multigrid = multigrid_hind, mask = mask)
 ```
 
 ```{r, message = FALSE, echo = FALSE}
-load("../ignore/vignette_data/hindcast.rda")
+load("./vignette_data/hindcast.rda")
 ```
 
 
@@ -373,7 +377,7 @@ plotClimatology(climatology(bias),
 # Bias Correction
 
 
-In the `downscaleR` package, the user can find the standard bias correction techniques used in the literature (scaling factors and quantile mapping) as well as other recently published extensions of these techniques (e.g. the multi-variable bias-correction ISI-MIP method, Hempel et al. 2013). The bias correction methods implemented in `downscaleR` are included in the functions `biasCorrection` and  `isimip`. For more information, visit the [wiki of downscaleR](https://github.com/SantanderMetGroup/downscaleR/wiki).
+In the `downscaleR` package, the user can find the standard bias correction techniques used in the literature (scaling factors and quantile mapping) as well as other recently published extensions of these techniques (e.g. the multi-variable bias-correction ISI-MIP method, Hempel _et al._ 2013). The bias correction methods implemented in `downscaleR` are included in the functions `biasCorrection` and  `isimip`. For more information, visit the [wiki of downscaleR](https://github.com/SantanderMetGroup/downscaleR/wiki).
 
 
 ## Empirical quantile mapping approach:
@@ -384,12 +388,12 @@ hindcast_bc <- biasCorrection(y = obsJJAS, x = hindcastJJAS,
 ```
 
 ```{r, echo = FALSE}
-load("../ignore/vignette_data/hindcast_bc.rda")
+load("./vignette_data/hindcast_bc.rda")
 ```
 
 # Calculating FWI climatologies
 
-Different commonplace seasonal FWI-derived indices (see e.g. Bedia et al 2014 for a description of the FWI-derived indices used in this article and others) can be flexibly calculated using `aggregateGrid`. Here, data are annually aggregated, using any user-defined function. `aggregateGrid` is a versatile function that can perform aggregations on any of the dimensions of the data array (members, longitude and/or latitude or different time intervals). In this case, to specify aggregations that are performed on an annual basis, the argument `aggr.y` is used. Some examples of user-defined aggregation functions are given in the next subsections:
+Different commonplace seasonal FWI-derived indices (see e.g. Bedia _et al._ 2014 for a description of the FWI-derived indices used in this article and others) can be flexibly calculated using `aggregateGrid`. Here, data are annually aggregated, using any user-defined function. `aggregateGrid` is a versatile function that can perform aggregations on any of the dimensions of the data array (members, longitude and/or latitude or different time intervals). In this case, to specify aggregations that are performed on an annual basis, the argument `aggr.y` is used. Some examples of user-defined aggregation functions are given in the next subsections:
 
 ## Mean seasonal FWI
 
@@ -414,7 +418,8 @@ fwimean_hind <- aggregateGrid(hindcast_bc, aggr.y = list(FUN = "mean", na.rm = T
 FWI 90 is defined as the seasonal 90th percentile of FWI. In this case, percentiles are directly computed using the R base funtion `quantile`:
 
 ```{r, message = FALSE}
-fwi90_obs <- aggregateGrid(obs, aggr.y = list(FUN = "quantile", probs = .9, na.rm = TRUE))
+fwi90_obs <- aggregateGrid(obs, aggr.y = list(FUN = "quantile",
+                                              probs = .9, na.rm = TRUE))
 ```
 
 ## FOT30
@@ -454,7 +459,7 @@ skill <- veriApply(verifun = "EnsRoca",
                    tdim = 2)
 ```
 ```{r,echo=FALSE,message=FALSE}
-load("../ignore/vignette_data/skill.rda")
+load("./vignette_data/skill.rda")
 ```
 The verification output is then converted to a suitable format, compatible with the R climate postprocessing bundle, using this `transformeR` function:
 
@@ -496,7 +501,8 @@ fwimean_obs_sub <- subsetGrid(fwimean_obs_detrend,
 plotClimatology(climatology(fwimean_obs_sub), 
                 backdrop.theme = "countries", 
                 col.regions = fwi.colors,
-                scales = list(draw = TRUE, x = list(alternating = FALSE, tick.number = 6)),
+                scales = list(draw = TRUE,
+                              x = list(alternating = FALSE, tick.number = 6)),
                 main = "Obs FWI climatology - Subset Area")
 ```
 
@@ -508,7 +514,7 @@ tercilePlot(fwimean_hind_sub, obs = fwimean_obs_sub, color.pal = "ypb")
 ```
 
 
-
+<!--
 ## Bubble map
 
 In this example, we present a bubble map, showing in the same plot the forecast prediction for a particular year and the overall performance of the forecasting system. In this example, we choose the year 2001, a year of above-normal FWI conditions in SE Europe that were notably well predicted by the model (see the tercile plot above).  
@@ -516,7 +522,7 @@ In this example, we present a bubble map, showing in the same plot the forecast 
 Bubble maps are implemented by the function `bubblePlot`, that combines in a geographic map several aspects of the seasonal forecast system using three properties of the bubbles: colour, size and transparency. Type `?bubblePlot` for details.
 
 
-```{r, warning=FALSE, fig.asp=0.5}
+```{r, warning=FALSE, fig.asp=0.5, eval=FALSE}
 bubblePlot(hindcast = fwimean_hind, obs = fwimean_obs,
            year.target = 2001,
            bubble.size = 3, 
@@ -524,10 +530,15 @@ bubblePlot(hindcast = fwimean_hind, obs = fwimean_obs,
            score = FALSE)
 ```
 
+-->
+
 # References
 
 * Bedia, J., Herrera, S., Camia, A., Moreno, J.M., Gutierrez, J.M., 2014. Forest Fire Danger Projections in the Mediterranean using ENSEMBLES Regional Climate Change Scenarios. Clim Chang 122, 185--199. doi:10.1007/s10584-013-1005-z
 * Bedia, J., Herrera, S., Gutierrez, J.M., Benali, A., Brands, S., Mota, B., Moreno, J.M., 2015. Global patterns in the sensitivity of burned area to fire-weather: implications for climate change. Agr. Forest Meteorol. 214--215, 369--379. doi:10.1016/j.agrformet.2015.09.002
+* Cofiño, A.S., Bedia, J., Iturbide, M., Vega, M., Herrera, S., Fernández, J., Frías, M.D., Manzanas, R., Gutiérrez, J.M., 2018. The ECOMS User Data Gateway: Towards seasonal forecast data provision and research reproducibility in the era of Climate Services. Climate Services 9, 33–43. https://doi.org/10.1016/j.cliser.2017.07.001
+* Frías, M.D., Iturbide, M., Manzanas, R., Bedia, J., Fernández, J., Herrera, S., Cofiño, A.S., Gutiérrez, J.M., 2018. An R package to visualize and communicate uncertainty in seasonal climate prediction. Environmental Modelling & Software 99, 101–110. https://doi.org/10.1016/j.envsoft.2017.09.008
+* Hempel, S., Frieler, K., Warszawski, L., Schewe, J., Piontek, F., 2013. A trend-preserving bias correction – the ISI-MIP approach. Earth Syst. Dynam. 4, 219–236. https://doi.org/10.5194/esd-4-219-2013
 * Saha, S., Moorthi, S., Wu, X., Wang, J., Nadiga, S., Tripp, P., Behringer, D., Hou, Y.-T., Chuang, H., Iredell, M., Ek, M., Meng, J., Yang, R., Peña Mendez, M., van den Dool, H., Zhang, Q., Wang, W., Chen, M., Becker, E., 2013. The NCEP Climate Forecast System Version 2. J Clim 130925135638001. doi:10.1175/JCLI-D-12-00823.1
 * van Wagner, C.E., 1987. Development and structure of the Canadian Forest Fire Weather Index (Forestry Tech. Rep. No. 35). Canadian Forestry Service, Ottawa, Canada.
 * Weedon, G.P., Balsamo, G., Bellouin, N., Gomes, S., Best, M.J., Viterbo, P., 2014. The WFDEI meteorological forcing data set: WATCH Forcing Data methodology applied to ERA-Interim reanalysis data. Water Resour. Res. 50, 7505–7514. doi:10.1002/2014WR015638
@@ -538,7 +549,8 @@ bubblePlot(hindcast = fwimean_hind, obs = fwimean_obs,
 ***
 
 ```{r}
-sessionInfo()
+sessionInfo(package = c("fireDanger", "transformeR", "downscaleR", "visualizeR", 
+                        "easyVerification", "loadeR", "loadeR.ECOMS"))
 ```
 
 ***
