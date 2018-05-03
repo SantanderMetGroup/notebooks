@@ -1,0 +1,550 @@
+---
+title: "Metadata encoding with `metaclipR`"
+subtitle: "An extension of the METACLIP Provenance Framework for climate4R"
+author: "J. Bedia & D. San Martín (Predictia)"
+date: "`r Sys.Date()`"
+encoding: "UTF8"
+output:
+  pdf_document:
+    highlight: pygments  
+    toc: yes
+    pandoc_args: [
+      "--number-sections",
+      "--number-offset=0"]
+  html_document:
+    fig_caption: yes
+    highlight: pygments
+    number_sections: yes
+    theme: readable
+    toc: yes
+    toc_float: yes
+documentclass: article
+abstract:   The objective of METAdata for CLImate Products ([METACLIP](http://metaclip.predictia.es/)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). The `metaclipR` package has been developed in order to ensure that all the operations undertaken under the [`climate4R`](http://meteo.unican.es/climate4R) framework for the R computing environment are adequately recorded following the METACLIP scheme. As a result, `metaclipR` interprets the commands and arguments passed to the different `climate4R` packages and maps them onto the semantic framework defined in the METACLIP [vocabularies](https://github.com/Predictia/metaclip), eventually leading to a RDF representation of data provenance. This vignette illustrates a case-study used in a recent paper by Iturbide et al. (submitted), to demonstrate the use of `metaclipR` and how the provenance of any research outcome can be explored through the use of the METACLIP visualization tool.
+---
+
+\fontfamily{cmr}
+\fontsize{11}{22}
+\selectfont
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      highlight = FALSE,
+                      message = FALSE,
+                      fig.align = "center",
+                      tidy = FALSE,
+                      fig.width = 7,
+                      cache = TRUE)
+```
+
+# Introduction
+
+The objective of METAdata for CLImate Products ([METACLIP](http://metaclip.predictia.es/)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). This requires the deployment of a comprehensive framework in order to track all relevant operations undertaken through complex data workflows. To this aim, METACLIP is based on semantics exploiting web standard Resource Description Framework (RDF), through the design of domain-specific extensions of standard vocabularies (e.g. [PROV-O](https://www.w3.org/TR/prov-o)) describing the different aspects involved in climate product generation. By introducing semantics to the metadata description, METACLIP ensures an effective communication of the information to a wide range of users with different levels of expertise. <br><br> 
+
+***
+**NOTE**: In the following, only the `metaclipR` commands will be syntax-highlighted, while the rest of climate data operations performed with the different `climate4R` packages will be presented without syntax highlighting.
+
+***
+
+
+# Package installation
+
+`metaclipR` is currently hosted in [Predictia's Public GitHub repository](https://github.com/Predictia/metaclipR). Using package `devtools` is highly recommended to ease installation:
+
+```{r,eval=FALSE}
+devtools::install_github("Predictia/metaclipR")
+```
+
+# Preparation
+
+First of all, the package `metaclipR` is loaded. A message will appear informing wether the connection with the remote ontology files has been successfull or not. In positive case, the package will be able to automatically map the metadata information encoded for individuals, thus yileding a much more enriched metadata description.
+
+```{r, message=TRUE}
+library(metaclipR)
+```
+
+A number of additional packages from the `climate4R` bundle are required to run this example. To obtain a more detailed overview of their functionalities and installation instructions, please refer to the [climate4R](http://meteo.unican.es/climate4R) page, with relevant links to the different wikis and additional resources.
+
+```{r}
+library(loadeR)
+library(transformeR)
+library(visualizeR)
+```
+
+Also, the package `climate4R.climdex` will be used to calculate the ETCDDI indices used in this example:
+
+```{r}
+library(climate4R.climdex)
+```
+
+
+In addition, other external packages useful for data representation will be used. In particular, the `RColorBrewer` package will be used in the following examples to produce maps with visually attractive color schemes.
+
+```{r}
+library(RColorBrewer)
+```
+
+
+# Example 1 - Calculation of a climate index from E-OBS data
+
+This example is envisaged to showcase the main characteristics of `metaclipR` and how it is applied within the `climate4R` framework. To This aim, the different panels of Figure 2 from Iturbide et al. are reproduced, and all the provenance information recorded and embedded in the final graphical output (a PNG file), ready to be inspected with the METACLIP visualization tool.
+
+The following steps are contemplated for a full provenance description of Figure 2, including the following steps:
+
+ 1. Definition of the data sources (in this case, the E-OBS observational database and one of the EURO-CORDEX RCM-GCM couplings for the Historical experiment)
+ 2. Data loading and subsetting. The `loadeR` package allows the retrieval of user-defined dmensional slices of the dataset (i.e. dataset subsetting), directly retrieved from the KNMI's OPeNDAP Service and local datasets. Furthermore, the loading function `loadGridData`, performs data aggregation on-the-fly, and is able to apply filters (via condition and threshold arguments), so different climate indices based on absolute threshold exceedances can be also computed on-the-fly.
+ 3. Climate Index calculation. The original E-OBS dataset has a daily temporal resolution. The ETCDDI indices use daily inputs
+ 4. Temporal aggregation, used to calculate annual climatologies of the monthly index (applying the "sum" cell method to estimate the total number of days per year)
+ 5. Climatology calculation (to compute the mean number of days per year, considering the climatological period 1971-2000)
+ 6. Regridding (to interpolate the rotated RCM grid to the regular 0.25 E-OBS grid)
+ 7. Calculation of the RCM bias for the climate index predictions 
+ 6. Creation of maps (climatological maps and a bias map)
+
+
+
+## Definition of the Dataset
+
+Usually, the first step for provenance tracking is to describe the primary data source. In METACLIP, this is achieved by the class `Dataset` of the `datasource` vocabulary (it will be referred by indicating the prefix followed by the class name as in `ds:Dataset` hereafter), that extends `prov:Entity`, and splits into 6 different subclasses attending to the nature of the data at hand (`ds:MultiDecadalSimulation`, `ds:Observations`, `ds:Reanalysis`,  etc.). Further classes are linked to `ds:Dataset` (via object properties), providing further provenance details such as the `ds:ModellingCenter` producing the data and the `ds:DataProvider` distributing the data id different from the latter (these are defined as subclasses of `prov:Agent`), the `ds:Project` in which the data can be framed (e.g. CMIP5, CORDEX etc.) or experiments (e.g. evaluation, historical, RCP85 etc.), defined as subclasses of `prov:Activity`. Other details are also given that are specific for each subclass of `ds:Dataset` (e.g., the driving `ds:GCM` for a given `ds:RCM` simulation -- who extend `prov:SoftwareAgent`--, the URLs serving as entry points for the data etc.). 
+
+
+Because there is a number of entities that are well known and of common use in many climate applications, there is a wide number of "Individuals" defined in the datasource vocabulary that are instances of these classes, and that are enriched with additional annotations providing extra metadata. The helper function `knownClassIndividuals` can help to identify the specific individuals defined for each particular class from a given METACLIP vocabulary (by default, it wll access the `datasource` vocabulary), as later shown.
+
+```{r,highlight=TRUE}
+knownClassIndividuals(classname = "GCM", vocabulary = "datasource")
+```
+
+Therefore, `metaclipR` can achieve the annotation any data source (either "known" or new) following the METACLIP schema. However, in order to ease the application within `climate4R`, there is a wide number of "pre-defined" datasets widely used, including all the datasets available through the PUBLIC role in the Santander MetGroup User Data Gateway (UDG), described in detail by Iturbide _et al._. For these "well-known" data sources, the full metadata description is automatically achieved. In order to ascertain which datasets can be "automatically" annotated, the helper function `showUDGDatasources` can be used. It prints the contents of an internal look-up table from which metadata will be directly read. As an example, in the following subsection, the E-OBS datasource is recorded. Further CORDEX RCM data that will be used later will be annotated in a similar way.
+
+```{r,highlight=TRUE}
+head(showUDGDatasources())
+```
+
+A schematic overview of the vocabulary structure is provided in the following Figure. For illustration purposes, the individuals defined for some of the classes are also displayed.
+
+```{r, out.width = "700px", fig.cap='Schematic overview of the main classes (yellow circles), object properties (arrows) and individuals (purple diamonds) of the datasource ontology used to describe a climate dataset. To avoid a congested graph, only the individuals defined for ds:GCM and ds:RCM are shown (there are other individuals describing :ModellingCenter, :Project and :DataProvider classes). The PROV-O classes extended by the datasource ontology are indicated by the :prov prefix'}
+knitr::include_graphics("./figs/Datasource.png")
+```
+
+## Working with the observations (E-OBS)
+
+E-OBS is a daily gridded observational dataset of reference in Europe (Haylock _et al._ 2008). It is available tkrough a public OPeNDAP repository maintained by the KNMI. In this example, the 0.25-degree regular grid of maximum temperature will be used. E-OBS is defined as an individual by METACLIP's datasource ontology, being also a dataset available through the UDG. Therefore, it can be located in the reference table of known data sources (it is located in the 7th row):  
+
+```{r,highlight=TRUE}
+showUDGDatasources()[7, ]
+```
+
+Therefore, the dataset name is *E-OBS_v14_0.25regular*. Using this name as input value for the `Dataset.name` argument in `metaclipR.Dataset` function will therefore indicate that the dataset is known, and all the required metadata will be automatically annotated by the function.
+
+Similarly, KNMI is also a known institution, for which a specific individual exists:
+
+```{r,highlight=TRUE}
+knownClassIndividuals("ModellingCenter")
+```
+
+When the data comes from the UDG data provider (see `knownClassIndividuals("DataProvider")`), the URL pointing to the data is automatically recorded. However, in this case we are using an alternative data provider (KNMI), and its URL can be optionally included. This URL will be internally encoded in the provenance info as a data property:
+
+
+```{r,highlight=TRUE}
+eobs.url <- "http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/tx_0.25deg_reg_v17.0.nc"
+metadata.EOBS <- metaclipR.Dataset(Dataset.name = "E-OBS_v17_0.25regular",
+                                   DataProvider = "KNMI",
+                                   DataProvider.URL = eobs.url,
+                                   Dataset.subclass = "ObservationalDataset",
+                                   Project = "ECA",
+                                   ModellingCenter = "KNMI")
+```
+
+To give an idea of the operation just undertaken, the function has started an RDF graph with the dataset information, roughly displayed in the following figure. There is of course much more information inside the graph (relevant URLs, class belonging and other annotations), but this requires the specific METACLIP visualization tool to be conveniently displayed in an interactive way. Also note that in this particular example, the data provider and the modelling center correspond to the same individual (KNMI). This is not necessarily so in other cases, and often the data produced by modelling centers is distributed by other providers (e.g., the UDG, ESGF etc.). There is also an associated Project (the European Climate Assessment -ECA-, see e.g. Klein-Tank _et al._ 2002), responsible for the generation of the data.
+
+
+```{r,fig.width=4.5,fig.height=4.5,fig.align='center',fig.cap='An RDF graph showing the Data source description. Entities (nodes) are linked by properties (arrows) following the so called \"triples\" of the form Subject--Predicate--Object. Thus, the RDF graph shown in formed by a set of three triples'}
+plot(metadata.EOBS$graph)
+```
+
+
+## Remote Data loading (subsetting)
+
+As shown in _Iturbide et al._, the function `loadGridData` from package `loadeR` was used to access the specific data slice used in the study. Note that `loadGridData` performs several steps in one single command call, depending on the different arguments used. Thus, it is possible to undertake dimensional subsetting + index.calculation + aggregation on-the-fly when using this data loading function. For this reason, a specific climate4R funtion has been designed to account for this characteristic. This allows a more accurate description of the different transformations experienced by the original data following the METACLIP schema when using this important `climate4R` data loading feature.
+
+In this example, the function `loadGridData` performs subsetting according to the arguments specified. Climate index calculation and aggregation will be performed afterwrads using other command calls. The data collocation parameters used for subsetting are indicated by the different specific arguments (`var`, `lonLim`, `latLim`, `season` and `years`, in this case). 
+
+
+```{r}
+lon <- c(-10, 20)
+lat <- c(35, 46)
+```
+
+
+```{r, eval = FALSE}
+tasmax <- loadGridData(dataset = eobs.url,
+                       var = "tx",
+                       season = 1:12,
+                       years = 1971:2000,
+                       lonLim = lon,
+                       latLim = lat)
+```
+```{r,echo=FALSE}
+load("data/EOBSv17_tasmax.Rdata")
+```
+
+Note that no arguments indicating temporal aggregation (`time`, `aggr.m` etc.) are being used. This meand that we are loading the data in its native temporal resolution, that in this case is daily.
+
+
+```{r,highlight=TRUE}
+metadata.EOBS <- metaclipR.loadeR(package = "loadeR", 
+                                  version = "1.4.0",
+                                  graph = metadata.EOBS,
+                                  output = "tasmax",
+                                  fun = "loadGridData",
+                                  arg.list = list(dataset = eobs.url,
+                                                  var = "tx",
+                                                  season = 1:12,
+                                                  years = 1971:2000,
+                                                  lonLim = lon,
+                                                  latLim = lat))
+```
+
+
+```{r,echo=FALSE,eval=FALSE}
+plot(metadata.EOBS$graph)
+```
+
+## Climate index calculation
+
+The function `climdexGrid` is the workhorse for the calculation of all the ETCCDI core indices, indicated by the `index.code` argument. Additional specific arguments from the `climdex.pcic` package routines can be passed to this function (these are deatiled in the help menu of `climdexGrid`). Here, we apply the default configuration of the SU index (Summer Days, i.e., the number of days per year recording a maximum temperature above 25ºC). 
+
+```{r,eval=FALSE}
+SU <- climdexGrid(index.code = "SU", tx = tasmax)
+```
+
+A specific metaclipR function (`metaclipR.etccdi`) has been designed for the specific characteristics of the ETCDDI indices:
+
+```{r,echo=FALSE}
+load("data/EOBSv17_SU_YY.Rdata")
+```
+
+```{r, highlight=TRUE}
+metadata.EOBS <- metaclipR.etccdi(graph = metadata.EOBS,
+                                  output = "SU",
+                                  arg.list = list(index.code = "SU"))
+```
+
+Note that the temporal resolution (as well as other relevant metadata) is updated after climate index calculation. In this case, the original daily maximum temperature (daily resolution) has been aggregated to an annual dataset after the index calculation.
+
+
+## Climatology calculation
+
+The climatological mean field is next calculated:
+
+```{r}
+SU.clim <- climatology(SU, clim.fun = list(FUN = "mean", na.rm = TRUE))
+```
+
+And the corresponding step's metadata is annotated. Note that by default, the function will asume that the `"mean"` cell method is being used (i.e., the climatological mean.) 
+
+```{r,highlight=TRUE}
+metadata.EOBS <- metaclipR.Climatology(graph = metadata.EOBS,
+                                       arg.list = list(clim.fun = list(FUN = "mean",
+                                                                       na.rm = TRUE)))
+```
+
+## Climatology map
+
+The default behaviour of `spatialPlot` will produce a basic map without text and with a basic "rainbow"-type color palette. 
+
+```{r}
+spatialPlot(SU.clim)
+```
+
+
+In order to reproduce the figure 2a in Iturbide et al., we add further customization options, indicating the same color palette and lines delimiting political boundaries:
+
+```{r,fig.cap='Mean number of summer days (SU index from ETCCDI) for the 30-year climatological period 1971-2000. The figure reproduces Figure 2a from Iturbide et al.'}
+SU.colors <- colorRampPalette(colors = rev(brewer.pal(11, "RdYlBu")))
+spatialPlot(SU.clim, col.regions = SU.colors(61),
+            at = seq(0,260,10),
+            backdrop.theme = "countries",
+            main = "Climatology of ETCCDI-SU Index (Summer Days) 1971-2000")
+```
+
+The metadata is next updated with the step generating the graphical output. The function `metaclipR.SpatialPlot` has been specifically designed to describe the provenance of graphical products generated with this function:
+
+
+```{r,highlight=TRUE}
+metadata.EOBS <- metaclipR.SpatialPlot(graph = metadata.EOBS,
+                                       input.grid = SU.clim,
+                                       arg.list = list(grid = SU.clim,
+                                                       col.regions = SU.colors(61),
+                                                       at = seq(0, 260, 10),
+                                                       backdrop.theme = "countries",
+                                                       main = "Climatology of Summer Days (ETCCDI-SU) 1971-2000"))
+```
+
+## Final Fig creation and metadata embedding
+
+```{r,eval=FALSE,echo=FALSE}
+graph2json(metadata.EOBS$graph, output.file = "fig2a.json")
+```
+
+
+
+```{r,eval=TRUE,highlight=TRUE}
+embedFig(plot.fun = "spatialPlot",
+         arg.list = list(grid = SU.clim,
+                         col.regions = SU.colors(61),
+                         at = seq(0,260,10),
+                         backdrop.theme = "countries",
+                         main = "Climatology of Summer Days (ETCCDI-SU) 1971-2000"),
+         full.metadata = metadata.EOBS$graph,
+         format = "png",
+         filename = "EOBS_SU_climatology.png",
+         width = 950, height = 800, res = 150)
+```
+
+A link to the final figure file with full provenance description is available in *this link*.
+
+
+
+# Example 2: Working with an RCM ensemble from the User Data Gateway
+
+This example follows with the Case Study 2 in Iturbide _et al._, and shows how `metaclipR` is used to describe the provenance of a bias map from an ensemble of RCMs from EURO-CORDEX. For consistency with the revious example, the European domain used in the first case is maintained. In particular, simulation data from the Historical experiment for the reference period 1971-2000 are loaded, considering 4 diffrerent RCM-GCM couplings. The SU index is calculated upon this data, and its bias _w.r.t._ E-OBS (described in the previous example) is computed. This operation requires a regridding step by which the totated RCM projection is interpolated onto the regular E-OBS grid. Finally, a bias plot is created, considering as reference the index climatology previously calculated in Example 1.
+
+This example showcases the inclusion on the _member_ dimension in the `climate4R` data structures to work with ensembles, inheriting part of the Unidata'a Common Data Model features and corresponding metadata. The inclusion of the _member_ dimension poses several advantages from the user point of view. For instance, the code is significantly simplified when dealing with multi-members (either when working with stochastic predictions or multi-model ensembles) since most of the **climate4R** operations (e.g. index calculation, regridding, validation etc.) are implemented to deal with grids containing the member dimesion, and therefore the necessary looping over several members is done behind the scenes. Furthermore, the use of members is also beneficial from the computational point of view, since most relevant functions have the option to parallelize across members through the optional argument `parallel` (and other parallelization configurations via argument `n.cores`), thus providing ease of use and computational efficiency.
+
+Note that the provenance of the E-OBS reference (stored in the R object `metadata` from the previous example), is re-used in this example, and joined with the metadata representation of the RCM processing and bias calculation.
+
+```{r}
+models <- UDG.datasets()
+ensemble.h <- head(models$name[grepl("EUROCORDEX44.*hist", models$name)], 4)
+ensemble.h
+```
+
+## Dataset provenance definition
+
+Six different _ds:Dataset_ class objects are next defined. As long as all data come from the UDG, the function will annotate all the metadata from these datasets automatically, and therefore only 2 arguments are needed to fully describe the datasets provenance: their name (`Dataset.name`) and the data provider (`DataProvider`). Note that the data provider is also a known data provider described by its own individual class in METACLIP.
+
+```{r, highlight=TRUE}
+ds.list <- lapply(ensemble.h, function(ds) {
+    metaclipR.Dataset(Dataset.name = ds, DataProvider = "UDG")
+})
+```
+
+## Loading and manipulating the EUROCORDEX simulations from the UDG
+
+
+```{r,eval=FALSE}
+TXh.list <- lapply(ensemble.h, function(x) {
+    loadGridData(dataset = x,
+                 var = "tasmax",
+                 season = 1:12,
+                 lonLim = lon,
+                 latLim = lat,
+                 years = 1971:2000)})
+```
+```{r,echo=FALSE}
+# save(TXh.list, file = "data/histlist.rda", compress = "xz")
+load("data/histlist.rda")
+```
+
+The following loop will define the dataset subsets for each dataset previously defined:
+
+```{r, highlight=TRUE}
+ds.list <- lapply(1:length(ds.list), function(x) {
+    metaclipR.loadeR(package = "loadeR", version = "1.4.0",
+                     output = TXh.list[[x]],
+                     graph = ds.list[[x]],
+                     fun = "loadGridData",
+                     arg.list = list(dataset = ensemble.h[[x]],
+                                     var = "tasmax",
+                                     season = 1:12,
+                                     lonLim = lon,
+                                     latLim = lat,
+                                     years = 1971:2000))
+})
+```
+
+
+```{r,eval=FALSE,echo=FALSE}
+library(igraph)
+library(metaclipR)
+graph.list <- ds.list
+graph <- graph.list[[1]]$graph
+nodename <- "Ensemble.sds"
+graph <- metaclipR:::my_add_vertices(graph,
+                         nv = 1,
+                         name = nodename,
+                         label = "Multi-model Ensemble",
+                         className = "ds:Ensemble")
+for (i in 2:length(graph.list)) {
+        graph <- my_union_graph(graph.list[[i]]$graph, graph)
+        graph <- add_edges(graph,
+                           c(getNodeIndexbyName(graph, graph.list[[i]]$parentnodename),
+                             getNodeIndexbyName(graph, nodename)),
+                           label = "ds:wasEnsembleMember")
+    }
+
+graph <- my_union_graph(ds.list[[1]]$graph, ds.list[[2]]$graph)
+my_add_ver  
+graph2json(graph, "ensemble.json")
+```
+
+
+
+Once the 4 GCM-RCM coupling forming the ensemble have been defined and the subset for the target season, time slice and spatial domain are defined, the ensemble can be constructed.
+
+## Ensemble construction
+
+Ensemble construction can be achieved using the function `bindGrid.member` from `transformeR`: 
+
+```{r, echo=FALSE}
+# TXh.list <- do.call("intersectGrid.time", list(TXh.list, which.return = 1:6)) 
+```
+
+
+```{r, eval=FALSE}
+ensemble <- bindGrid.member(TXh.list)
+```
+
+```{r,echo=FALSE}
+load("data/ensemble.rda")
+```
+
+The function takes care of all data collocation aspects (spatial and temporal checks) to ensure the consistency among the different ensemble members, and if valid, joins the different models along a new `member` dimension yielding a new data array with all the necessary metadata:
+
+```{r}
+getShape(ensemble)
+```
+
+```{r,highlight=TRUE}
+ens.meta <- metaclipR.Ensemble(graph.list = ds.list)
+```
+
+```{r,eval=FALSE,echo=FALSE}
+graph2json(ens.meta$graph, "ensemble.json")
+```
+
+
+## Index calculation
+
+```{r,eval=FALSE}
+SU.ens <- climdexGrid(tx = ensemble, index.code = "SU")
+```
+
+```{r, echo=FALSE}
+# save(SU.ens, file = "data/SU.ens.rda", compress = "xz")
+load("data/SU.ens.rda")
+```
+
+```{r,highlight=TRUE}
+ens.meta <- metaclipR.etccdi(graph = ens.meta,
+                             output = "SU.ens",
+                             arg.list = list(index.code = "SU"))
+```
+
+## Regridding
+
+In this step the rotated RCM coordinates (see the previous example), are interpolated onto the regular grid of 0.25 degree resolution of E-OBS:
+
+```{r, message=FALSE,warning=FALSE}
+ensemble <- interpGrid(SU.ens,
+                       new.coordinates = getGrid(SU), method = "nearest")
+```
+
+```{r,highlight=TRUE,warning=FALSE}
+ens.meta <- metaclipR.Regridding(graph = ens.meta,
+                                 arg.list = list(new.coordinates = getGrid(SU),
+                                                 method = "nearest"))
+```
+
+## Bias calculation
+
+First, the climatology of each RCM is calculated, so for each GCM-RCM coupling, we get the mean number of summer days for the historical period (1971-2000): 
+
+```{r}
+ens.clim <- climatology(ensemble)
+```
+The anomaly step is recorded in the provenance description:
+
+```{r, highlight=TRUE}
+ens.meta <- metaclipR.Climatology(graph = ens.meta,
+                                  arg.list = list(clim.fun = list(FUN = "mean", na.rm = TRUE),
+                                                  by.member = TRUE))
+```
+
+Secondly, the bias is directly calculated by substracting the E-OBS climatology from the RCM climatology just computed. This can be done with function `scaleGrid` (formerly called `localScaling`, the latter deprecated).
+
+```{r}
+bias <- scaleGrid(ens.clim, base = SU)
+```
+
+This step is recorded as a validation step using `metaclipR.Validation`, considering "Bias" as the quality aspect addressed. At this point, the provenance information from the E-OBS SU climatology (Example 1) and from the RCM Ensemble (this example) are joined within a single RDF graph: 
+
+```{r, highlight=TRUE}
+ens.meta <- metaclipR.Validation(package = "transformeR", version = "1.3.3",
+                                 PredictionGraph = ens.meta,
+                                 ReferenceGraph = metadata.EOBS,
+                                 fun = "scaleGrid", QualityAspect = "Bias",
+                                 arg.list = list(grid = "ens.clim",
+                                                 base = "SU",
+                                                 clim.fun = list(FUN = "mean",
+                                                                 na.rm = TRUE),
+                                                 by.member = TRUE))
+```
+
+## Bias map generation and final metadata embedding
+
+Finally, the bias map is generated using the the function `spatialPlot` from package `visualizeR` from the bias object:
+
+```{r,fig.cap='Bias of the EUROCORDEX RCMs (historical simulation) w.r.t. the E-OBS reference for the period 1971-2000'}
+bias.colors <- colorRampPalette(brewer.pal(n = 9, "PiYG")) 
+spatialPlot(bias, col.regions = bias.colors(59), backdrop.theme = "countries",
+            set.min = -100, set.max = 100, at = seq(-100,100,10))
+```
+
+The metadata corresponding to the graphical product is also recorded:
+
+```{r, highlight=TRUE}
+ens.meta <- metaclipR.SpatialPlot(graph = ens.meta, input.grid = bias,
+                                  arg.list = list(col.regions = bias.colors(59),
+                                                  backdrop.theme = "countries",
+                                                  set.min = -100, set.max = 100,
+                                                  at = seq(-100,100,10),
+                                                  main = "Bias of SU index of 6 EUROCORDEX historical simulations (1971-2000)"))
+```
+
+Finally, both the file containing the map and the embedded metadata can be produced using `embedFig`, that undertakes all operations (metadata encoding + graphical product generation + metadata embedding) in a single function call:
+
+```{r,highlight=TRUE}
+embedFig(plot.fun = "spatialPlot", full.metadata = ens.meta$graph,
+         format = "png", filename = "ensembleBias.png",
+         width = 1000, height = 850, res = 150,
+         arg.list = list(grid = bias,
+                         col.regions = bias.colors(59),
+                         set.min = -100, set.max = 100,
+                         at = seq(-100,100,10),
+                         backdrop.theme = "countries",
+                         main = "Bias of SU index of 6 EUROCORDEX historical simulations (1971-2000)"))
+```
+
+
+The final output figure is available for download in **this link**. The metadata can be inspected using the METACLIP visualization tool: http://metaclip-interpreter.predictia.es/
+
+
+```{r,echo=FALSE,eval=TRUE}
+graph2json(ens.meta$graph, output.file = "ensembleBias.json")
+```
+
+# References
+
+ * Haylock, M.R., Hofstra, N., Klein Tank, A.M.G., Klok, E.J., Jones, P.D., New, M., 2008. A European daily high-resolution gridded data set of surface temperature and precipitation for 1950–2006. Journal of Geophysical Research 113. https://doi.org/10.1029/2008JD010201
+
+ * Klein Tank, A.M.G., Wijngaard, J.B., Können, G.P., Böhm, R., Demarée, G., Gocheva, A., Mileta, M., Pashiardis, S., Hejkrlik, L., Kern-Hansen, C., Heino, R., Bessemoulin, P., Müller-Westermeier, G., Tzanakou, M., Szalai, S., Pálsdóttir, T., Fitzgerald, D., Rubin, S., Capaldo, M., Maugeri, M., Leitass, A., Bukantis, A., Aberfeld, R., van Engelen, A.F.V., Forland, E., Mietus, M., Coelho, F., Mares, C., Razuvaev, V., Nieplova, E., Cegnar, T., Antonio López, J., Dahlström, B., Moberg, A., Kirchhofer, W., Ceylan, A., Pachaliuk, O., Alexander, L.V., Petrovic, P., 2002. Daily dataset of 20th-century surface air temperature and precipitation series for the European Climate Assessment. Int. J. Climatol. 22, 1441–1453. https://doi.org/10.1002/joc.773
+
+
+# Session info
+
+```{r}
+print(sessionInfo(package = c("loadeR", "transformeR", "visualizeR", "metaclipR")))
+```
+
+
