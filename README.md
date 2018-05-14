@@ -16,6 +16,7 @@ An overview of the notebooks so far included and the corresponding published art
 | 2018_ECOMS-UDG_ClimateServices | The ECOMS User Data Gateway: Towards seasonal forecast data provision and research reproducibility in the era of Climate Services | http://dx.doi.org/10.1016/j.cliser.2017.07.001
 | 2018_fireDanger_ClimateServices | Seasonal predictions of Fire Weather Index: Paving the way for their operational applicability in Mediterranean Europe | http://dx.doi.org/10.1016/j.cliser.2017.04.001
 | 2018_climate4R_example* | climate4R: An R-based framework for Climate Data Access, Post-processing and Bias Correction | _submitted_
+| 2018_metaclip_EMS* | METACLIP: A semantic provenance framework for climate products | _submitted_
 
 ***
 **NOTE**: `climate4R` and related packages are currently under active development. Thus, the notebooks often indicate the installation of the package versions that were used at the moment of compiling them. Alternatively, there is usually a Session Information section at the end of each notebook with details on the package versions used to compile. As a result some examples may fail if run with some current package versions. If you experience problems while running some of the examples, **please ensure that you are using the appropriate package versions**. In case of doubts, just let us know by dropping a ticket in the Issues section of this repo. Thank you!
