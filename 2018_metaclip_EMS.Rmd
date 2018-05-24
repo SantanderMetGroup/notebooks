@@ -4,6 +4,7 @@ subtitle: "An extension of the METACLIP Provenance Framework for climate4R"
 author: "J. Bedia & D. San Martín (Predictia)"
 date: "`r Sys.Date()`"
 encoding: "UTF8"
+urlcolor: blue
 output:
   pdf_document:
     highlight: pygments  
@@ -49,10 +50,10 @@ The objective of METAdata for CLImate Products ([METACLIP](http://metaclip.predi
 
 # Package installation
 
-`metaclipR` is currently hosted in [Predictia's Public GitHub repository](https://github.com/Predictia/metaclipR). Using package `devtools` is highly recommended to ease installation:
+`metaclipR` is currently hosted in [METACLIP's Public GitHub repository](https://github.com/Predictia/metaclipR). Using package `devtools` is highly recommended to ease installation:
 
 ```{r,eval=FALSE}
-devtools::install_github("Predictia/metaclipR")
+devtools::install_github("metaclip/metaclipR")
 ```
 
 # Preparation
@@ -90,10 +91,25 @@ Furthermore, for conciseness of a few code chunks, some command calls will be so
 library(magrittr)
 ```
 
+## Loading intermediate R objects
+
+Some intermediate steps that may take up to a few minutes to be executed (data loading, bias corrected ensemble etc.) can be directly loaded from a remote location instead of being calculated. This is indicated when relevant in the **DIRECT OBJECT DOWNLOAD** boxes. A specific function (`my_load`) has been prepared to this aim, in order to avoid possible system-dependent [remote data loading errors](https://stackoverflow.com/questions/12463583/the-cause-of-bad-magic-number-error-when-loading-a-workspace-and-how-to-avoid):
+
+```{r}
+my_load <- function(file.url, verbose = TRUE) {
+    tmpfile <- tempfile()
+    download.file(url = file.url, destfile = tmpfile)
+    load(tmpfile, verbose = verbose)
+}
+```
+
+The argument is the full URL to the target R data object (as a character string), that will be indicated when relevant.
+
+
 
 # **Example 1** - Calculation of a climate index from E-OBS data
 
-This example is envisaged to showcase the main characteristics of `metaclipR` and how it is applied within the `climate4R` framework. To This aim, the different panels of Figure 2 from Iturbide _et al._ (submitted) are reproduced, and all the provenance information recorded and embedded in the final graphical output (a PNG file), ready to be inspected with the METACLIP visualization tool.
+This example is envisaged to showcase the main characteristics of `metaclipR` and how it is applied within the `climate4R` framework. To this aim, the different panels of Figure 2 from Iturbide _et al._ (submitted) are reproduced, and all the provenance information recorded and embedded in the final graphical output (a PNG file), ready to be inspected with the METACLIP visualization tool.
 
 For instance, the following steps are contemplated for a full provenance description of the above-mentioned Fig. 2, including the following steps:
 
@@ -197,6 +213,17 @@ tasmax <- loadGridData(dataset = eobs.url,
 load("data/EOBSv17_tasmax.Rdata")
 ```
 
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of this function can be directly loaded from:
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/EOBSv17_tasmax.Rdata")
+```
+***
+
 Note that no arguments indicating temporal aggregation (`time`, `aggr.m` etc.) are being used. This means that we are loading the data in its native temporal resolution, that in this case is daily. Next, a call to the corresponding `metaclipR` function is done to record this subsetting step in the data workflow:
 
 
@@ -234,6 +261,17 @@ A specific `metaclipR` function (`metaclipR.etccdi`) has been designed for the s
 ```{r,echo=FALSE}
 load("data/EOBSv17_SU_YY.Rdata")
 ```
+
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of this function can be directly loaded from:
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/EOBSv17_SU_YY.Rdata")
+```
+*** 
 
 ```{r, highlight=TRUE}
 metadata.EOBS.SU <- metaclipR.etccdi(graph = metadata.EOBS,
@@ -359,6 +397,20 @@ TXh.list <- lapply(ensemble.h, function(x) {
 load("data/histlist.rda")
 ```
 
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of this function can be directly loaded from (~94 Mb):
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/histlist.rda")
+```
+*** 
+
+
+
+
 The following loop will define the dataset subsets for each dataset previously defined.
 
 
@@ -408,6 +460,20 @@ ensemble <- bindGrid.member(TXh.list)
 load("data/ensemble.rda")
 ```
 
+
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of this function can be directly loaded from (~133Mb):
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/ensemble.rda")
+```
+*** 
+
+
+
 The function takes care of all data collocation aspects (spatial and temporal checks) to ensure the consistency among the different ensemble members, and if valid, joins the different models along a new `member` dimension yielding a new data array with all the necessary metadata:
 
 ```{r}
@@ -428,6 +494,19 @@ SU.ens <- climdexGrid(tx = ensemble, index.code = "SU")
 # save(SU.ens, file = "data/SU.ens.rda", compress = "xz")
 load("data/SU.ens.rda", verbose = T)
 ```
+
+
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of this function can be directly loaded from (~140Kb):
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/SU.ens.rda")
+```
+*** 
+
 
 ```{r,highlight=TRUE}
 ens.meta <- metaclipR.etccdi(graph = ens.meta,
@@ -562,14 +641,20 @@ TXrcp85.list <- lapply(ensemble.rcp85, function(x) {
 
 ```{r,echo=FALSE}
 load("data/rcp85list.rda")
-# load("data/histlist.eqm.rda", verbose = TRUE)
-# load("data/rcp85_eqm_list.rda", verbose = TRUE) 
-# load("data/ensemble_rcp85_eqm.rda", verbose = TRUE)
-# for (i in 1:length(TXrcp85.eqm.list)) {
-    # ens.rcp85.eqm$Data <- round(ens.rcp85.eqm$Data, 2)
-# }
-# save(ens.rcp85.eqm, file = "data/ensemble_rcp85_eqm.rda", compress = "xz")
 ```
+
+
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of this function can be directly loaded from (~92Mb):
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/rcp85list.rda")
+```
+*** 
+
 
 The subsetting step is recorded using `metaclipR.loadGridData`:
 
@@ -620,6 +705,20 @@ TXrcp85.eqm.list <- lapply(1:length(TXrcp85.list), function(i) {
 load("data/rcp85_eqm_list.rda")
 ```
 
+
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of the above code chunk can be directly loaded from (~167Mb):
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/rcp85_eqm_list.rda")
+```
+*** 
+
+
+
 ```{r,highlight=TRUE}
 rcp85.list <- lapply(1:length(rcp85.list), function(i) {
     metaclipR.BiasCorrection(package = "downscaleR", version = "3.0.0",
@@ -654,6 +753,20 @@ After correction, the ensemble is built. We use the utility function `bindGrid.m
 ens.rcp85.eqm <- bindGrid.member(TXrcp85.eqm.list)
 ```
 
+
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of the above code chunk can be directly loaded from (~172Mb):
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/ensemble_rcp85_eqm.rda")
+```
+*** 
+
+
+
 And the corresponding ensemble construction is recorded in the provenance record:
 
 ```{r,highlight=TRUE}
@@ -670,6 +783,19 @@ load("data/SU_rcp85_eqm.rda", verbose = TRUE)
 ```{r,eval=FALSE}
 su.rcp85.eqm <- climdexGrid(tx = ens.rcp85.eqm, index.code = "SU")
 ```
+
+
+***
+
+**DIRECT OBJECT DOWNLOAD**
+
+The output of the above code chunk can be directly loaded from (~285Kb):
+
+```{r,eval=FALSE}
+my_load("http://www.metaclip.predictia.es/notebook_data/SU_rcp85_eqm.rda")
+```
+*** 
+
 
 
 ```{r,highlight=TRUE}
@@ -790,6 +916,8 @@ As in the previous cases, the final output figure is available in the exmplae ga
  * Gutiérrez, J.M. _et al._ (2018). An intercomparison of a large ensemble of statistical downscaling methods over Europe: Results from the VALUE perfect predictor cross-validation experiment. International Journal of Climatology. https://doi.org/10.1002/joc.5462
 
  * Haylock, M.R., Hofstra, N., Klein Tank, A.M.G., Klok, E.J., Jones, P.D., New, M., 2008. A European daily high-resolution gridded data set of surface temperature and precipitation for 1950–2006. Journal of Geophysical Research 113. https://doi.org/10.1029/2008JD010201
+ 
+ * Iturbide, M., Bedia, J., Herrera, S., Bano-Medina, J., Fernández, J., Frías, M.D., Manzanas, R., San Martin, D., Cimadevilla, E., Cofiño, A., Gutiérrez, J., (_submitted_). climate4R: An R-based framework for Climate Data Access, Postprocessing and Bias Correction. Submitted to Environmental Modelling and Software.
  
  * Jacob, D. _et al._ (2014). EURO-CORDEX: new high-resolution climate change projections for European impact research. Reg Environ Change 14, 563–578. https://doi.org/10.1007/s10113-013-0499-2
 
