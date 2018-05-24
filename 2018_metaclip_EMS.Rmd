@@ -6,6 +6,12 @@ date: "`r Sys.Date()`"
 encoding: "UTF8"
 urlcolor: blue
 output:
+  pdf_document:
+    highlight: pygments  
+    toc: yes
+    pandoc_args: [
+      "--number-sections",
+      "--number-offset=0"]
   html_document:
     fig_caption: yes
     highlight: pygments
@@ -13,12 +19,6 @@ output:
     theme: readable
     toc: yes
     toc_float: yes
-  pdf_document:
-    highlight: pygments  
-    toc: yes
-    pandoc_args: [
-      "--number-sections",
-      "--number-offset=0"]
 documentclass: article
 abstract:   The objective of METAdata for CLImate Products ([METACLIP](http://metaclip.predictia.es/)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). The `metaclipR` package has been developed in order to ensure that all the operations undertaken under the [`climate4R`](http://meteo.unican.es/climate4R) framework for the R computing environment are adequately recorded following the METACLIP scheme. As a result, `metaclipR` interprets the commands and arguments passed to the different `climate4R` packages and maps them onto the semantic framework defined in the METACLIP [vocabularies](https://github.com/Predictia/metaclip), eventually leading to a RDF representation of data provenance. This vignette illustrates a case-study used in a recent paper by Iturbide et al. (submitted), to demonstrate the use of `metaclipR` and how the provenance of any research outcome can be explored through the use of the METACLIP visualization tool.
 ---
@@ -916,6 +916,8 @@ As in the previous cases, the final output figure is available in the exmplae ga
  * Gutiérrez, J.M. _et al._ (2018). An intercomparison of a large ensemble of statistical downscaling methods over Europe: Results from the VALUE perfect predictor cross-validation experiment. International Journal of Climatology. https://doi.org/10.1002/joc.5462
 
  * Haylock, M.R., Hofstra, N., Klein Tank, A.M.G., Klok, E.J., Jones, P.D., New, M., 2008. A European daily high-resolution gridded data set of surface temperature and precipitation for 1950–2006. Journal of Geophysical Research 113. https://doi.org/10.1029/2008JD010201
+ 
+ * Iturbide, M., Bedia, J., Herrera, S., Bano-Medina, J., Fernández, J., Frías, M.D., Manzanas, R., San Martin, D., Cimadevilla, E., Cofiño, A., Gutiérrez, J., (_submitted_). climate4R: An R-based framework for Climate Data Access, Postprocessing and Bias Correction. Submitted to Environmental Modelling and Software.
  
  * Jacob, D. _et al._ (2014). EURO-CORDEX: new high-resolution climate change projections for European impact research. Reg Environ Change 14, 563–578. https://doi.org/10.1007/s10113-013-0499-2
 
