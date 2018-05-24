@@ -123,19 +123,19 @@ head(showUDGDatasources())
 
 A schematic overview of the vocabulary structure is provided in the following Figure. For illustration purposes, the individuals defined for some of the classes are also displayed.
 
-```{r, out.width = "500px", fig.cap='Schematic overview of the main classes (yellow circles), object properties (arrows) and individuals (purple diamonds) of the datasource ontology used to describe a climate dataset. To avoid a congested graph, only the individuals defined for ds:GCM and ds:RCM are shown (there are other individuals describing :ModellingCenter, :Project and :DataProvider classes). The PROV-O classes extended by the datasource ontology are indicated by the :prov prefix'}
+```{r, echo=FALSE, out.width = "500px", fig.cap='Schematic overview of the main classes (yellow circles), object properties (arrows) and individuals (purple diamonds) of the datasource ontology used to describe a climate dataset. To avoid a congested graph, only the individuals defined for ds:GCM and ds:RCM are shown (there are other individuals describing :ModellingCenter, :Project and :DataProvider classes). The PROV-O classes extended by the datasource ontology are indicated by the :prov prefix'}
 knitr::include_graphics("./figs/Datasource.png")
 ```
 
 ## Working with the observations (E-OBS)
 
-E-OBS is a daily gridded observational dataset of reference in Europe (Haylock _et al._ 2008). It is available tkrough a public OPeNDAP repository maintained by the KNMI. In this example, the 0.25-degree regular grid of maximum temperature will be used. E-OBS is defined as an individual by METACLIP's datasource ontology, being also a dataset available through the UDG. Therefore, it can be located in the reference table of known data sources (it is located in the 7th row):  
+E-OBS is a daily gridded observational dataset of reference in Europe (Haylock _et al._ 2008). It is available through a public OPeNDAP repository maintained by the KNMI. In this example, the 0.25-degree regular grid of maximum temperature will be used. E-OBS is defined as an individual by METACLIP's datasource ontology, being also a dataset available through the UDG. Therefore, it can be located in the reference table of known data sources (it is located in the 7th row):  
 
 ```{r,highlight=TRUE}
 showUDGDatasources()[7, ]
 ```
 
-Therefore, the dataset name is *E-OBS_v14_0.25regular*. Using this name as input value for the `Dataset.name` argument in `metaclipR.Dataset` function will therefore indicate that the dataset is known, and all the required metadata will be automatically annotated by the function. However, in this example we won't use the UDG E-OBS version, but a more recent one available from the KNMI server.
+Therefore, the dataset name is *E-OBS_v14_0.25regular*. Using this name as input value for the `Dataset.name` argument in `metaclipR.Dataset` function will therefore indicate that the dataset is known, and all the required metadata will be automatically annotated by the function. However, in this example we won't use the UDG E-OBS version, but a more recent one available from the KNMI server. The usage of known datasets from the UDG is later illustrated in Examples 2 and 3.
 
 Similarly, KNMI is also a known institution, for which a specific individual exists:
 
@@ -163,6 +163,14 @@ To give an idea of the operation just undertaken, the function has started an RD
 plot(metadata.EOBS$graph)
 ```
 
+
+Once a primary data source (in this case the EOBS dataset) has been described, subsequent operations will take place leading to different transformations. The next step in the data workflow is subsetting, by which a particular spatiotemporal slice of data for a specific variable is extracted from the database for working. All the transformations experienced by the data throughout the data workflow are incoded in METACLIP with the _Step_ class of the _datasource_ vocabulary. The _Step_ class extends the _Derivation_ class from the PROV-O vocabulary defined as "a transformation of an entity into another, an update of an entity resulting in a new one, or the construction of a new entity based on a pre-existing entity". _Steps_ are therefore important in the METACLIP Framework. 
+
+```{r, echo=FALSE,out.width = "500px", fig.cap='Schematic overview of the main classes (yellow circles, blue arrows represent subclasses) of the different METACLIP ontologies used to describe data transformations. The vocabulary defining each class is indicated by their prefixes'}
+knitr::include_graphics("./figs/transformations.png")
+```
+
+In the following, different data transformations are sequentially described, from subsetting to climate index computation, climatology calculation and final map creation. Further transformations are addressed in Examples 2 and 3 (anomaly calculation, bias correction ...).
 
 ## Remote Data loading (subsetting)
 
@@ -209,6 +217,8 @@ metadata.EOBS <- metaclipR.loadeR(package = "loadeR",
 
 ```{r,echo=FALSE,eval=FALSE}
 plot(metadata.EOBS$graph)
+metaclipR::graph2json(metadata.EOBS$graph, output.file = "/tmp/kk.json")
+
 ```
 
 ## Climate index calculation
@@ -263,10 +273,11 @@ In order to reproduce the figure 2a in Iturbide _et al._ (submitted), we add fur
 
 ```{r,fig.cap='Mean number of summer days (SU index from ETCCDI) for the 30-year climatological period 1971-2000. The figure reproduces Figure 2a from Iturbide et al.'}
 SU.colors <- colorRampPalette(colors = rev(brewer.pal(11, "RdYlBu")))
+main <- "Climatology of Summer Days (ETCCDI-SU) 1971-2000"
 spatialPlot(SU.clim, col.regions = SU.colors(61),
             at = seq(0,260,10),
             backdrop.theme = "countries",
-            main = "Climatology of ETCCDI-SU Index (Summer Days) 1971-2000")
+            main = main)
 ```
 
 The metadata is next updated with the step generating the graphical output. The function `metaclipR.SpatialPlot` has been specifically designed to describe the provenance of graphical products generated with this function:
@@ -279,7 +290,7 @@ metadata.EOBS.SUplot <- metaclipR.SpatialPlot(graph = metadata.EOBS.SU,
                                                               col.regions = SU.colors(61),
                                                               at = seq(0, 260, 10),
                                                               backdrop.theme = "countries",
-                                                              main = "Climatology of Summer Days (ETCCDI-SU) 1971-2000"))
+                                                              main = main))
 ```
 
 ## Final Fig creation and metadata embedding
@@ -292,7 +303,7 @@ embedFig(plot.fun = "spatialPlot",
                          col.regions = SU.colors(61),
                          at = seq(0,260,10),
                          backdrop.theme = "countries",
-                         main = "Climatology of Summer Days (ETCCDI-SU) 1971-2000"),
+                         main = main),
          full.metadata = metadata.EOBS.SUplot$graph,
          format = "png",
          filename = "EOBS_SU_climatology.png",
@@ -340,7 +351,8 @@ TXh.list <- lapply(ensemble.h, function(x) {
                  season = 1:12,
                  lonLim = lon,
                  latLim = lat,
-                 years = 1971:2000) %>% interpGrid(new.coordinates = ref.grid, method = "nearest")})
+                 years = 1971:2000) %>% interpGrid(new.coordinates = ref.grid,
+                                                   method = "nearest")})
 ```
 ```{r,echo=FALSE}
 # save(TXh.list, file = "data/histlist.rda", compress = "xz")
@@ -467,7 +479,8 @@ Finally, the bias map is generated using the the function `spatialPlot` from pac
 ```{r,fig.cap='Bias of the EUROCORDEX RCMs (historical simulation) w.r.t. the E-OBS reference for the period 1971-2000',fig.width=10,fig.height=7}
 bias.colors <- colorRampPalette(brewer.pal(n = 9, "PiYG")) 
 main = "ETCCDI SU Index Bias (historical simulations 1971-2000)"
-panel.lab <- gsub("^EUROCORDEX44_", "", ensemble.h) %>% gsub(pattern = "_v1_historical$", replacement = "")
+panel.lab <- gsub("^EUROCORDEX44_", "", ensemble.h) %>% gsub(pattern = "_v1_historical$",
+                                                             replacement = "")
 spatialPlot(bias, col.regions = bias.colors(59),
             backdrop.theme = "countries",
             set.min = -80, set.max = 80,
@@ -509,6 +522,14 @@ The final output figure is available in the example gallery of the METACLIP Inte
 
 Climate projections generally exhibit systematic deviations from observations, as illustrated in bias maps generated in the previous section. Removing those biases is typically the first step towards useful/actionable climate information and thus a prerequisite for subsequent use, e.g. in impact studies and/or for climate services. In this example, a typical bias correction exercise is illustrated. To this aim, future projections (2041-2070) from the RCP85 are loaded, and a bias correction method widely applied in impact studies (non-parametric quantile mapping) is applied to the maximum temperature grids prior to SU index calculation. Finally, projected delta maps are constructed upon the bias-corrected data. A full provenance description building on the METACLIP framework is achieved throughout this example.
 
+The _calibration_ vocabulary contains a semantic description of the different downscaling and bias correction methodologies, extending the _ds:Step_ class previously defined in the _datasource_ vocabulary to describe data transformations.
+
+
+```{r, echo=FALSE, out.width = "500px", fig.cap='Schematic overview of the "calibration" vocabulary with its main classes (yellow circles), object properties (arrows) and individuals (purple diamonds). For illustration, some individual instances of the BiasCorrection superclass are depicted, including the EQMs method (pertaining to the non-parametric quantile mapping subclass), that is used in this example.'}
+knitr::include_graphics("./figs/calibration_schema.png")
+```
+
+
 ## Loading the RCP85 projections (+ regridding)
 
 First of all, the origin of the data is defined. As previously illustrated, we first identify the datasets to be loaded.
@@ -535,23 +556,22 @@ TXrcp85.list <- lapply(ensemble.rcp85, function(x) {
                  season = 1:12,
                  lonLim = lon,
                  latLim = lat,
-                 years = 2041:2070) %>% interpGrid(new.coordinates = ref.grid, method = "nearest")})
+                 years = 2041:2070) %>% interpGrid(new.coordinates = ref.grid,
+                                                   method = "nearest")})
 ```
 
 ```{r,echo=FALSE}
-load("data/rcp85list.rda", verbose = TRUE)
-
+load("data/rcp85list.rda")
 # load("data/histlist.eqm.rda", verbose = TRUE)
-# 
-# for (i in 1:length(TXh.list)) {
-#     TXh.list[[i]]$Data <- round(TXh.list[[i]]$Data, 2)
+# load("data/rcp85_eqm_list.rda", verbose = TRUE) 
+# load("data/ensemble_rcp85_eqm.rda", verbose = TRUE)
+# for (i in 1:length(TXrcp85.eqm.list)) {
+    # ens.rcp85.eqm$Data <- round(ens.rcp85.eqm$Data, 2)
 # }
-# save(TXh.list, file = "data/histlist.rda", compress = "xz")
+# save(ens.rcp85.eqm, file = "data/ensemble_rcp85_eqm.rda", compress = "xz")
 ```
 
-
 The subsetting step is recorded using `metaclipR.loadGridData`:
-
 
 ```{r}
 rcp85.list <- lapply(1:length(rcp85.list), function(x) {
@@ -568,8 +588,6 @@ rcp85.list <- lapply(1:length(rcp85.list), function(x) {
 })
 ```
 
-
-
 And next the regridding step is recorded:
 
 ```{r, highlight=TRUE,warning=FALSE}
@@ -581,11 +599,9 @@ rcp85.list <- lapply(1:length(rcp85.list), function(x) {
                                          new.coordinates = ref.grid))})
 ```
 
-
 ## Bias correction
 
-The function `biasCorrection` from the `climate4R` package `downscaleR` (Bedia et al. 2017) is used to undertake bias correction. Here, a standard (non-parametric) empirical quantile mapping is used (EQM). This EQM implementation is based on adjusting 99 percentiles and linearly interpolating inside this range every two consecutive percentiles; outside this range a constant extrapolation (using the correction obtained for the 1st or 99th percentile) is applied. In order to
-explicitly model the seasonal cycle, the variant EQMs considers a 31-day moving window centred on every calendar day to calibrate the method. The method (and some of its variants) is described in e.g. in Gutiérrez _et al._ 2018 as part of a comprehensive intercomparison experiment. EQM is implemented in `downscaleR` (Bedia _et al._ 2017) using the `biasCorrection` function, with the options `method = "eqm"` and `extrapolation = "constant"` (including `precipitation = TRUE` and `pr.threshold = 1` for precipitation, which does not apply in this example). For EQMs (here used), the extra argument `window = c(30,1)` was included.
+The function `biasCorrection` from the `climate4R` package `downscaleR` (Bedia et al. 2017) is used to undertake bias correction. Here, a standard (non-parametric) empirical quantile mapping is used (EQMs). This EQMs implementation is based on adjusting 99 percentiles and linearly interpolating inside this range every two consecutive percentiles; outside this range a constant extrapolation (using the correction obtained for the 1st or 99th percentile) is applied. In order to explicitly model the seasonal cycle, the variant EQMs considers a 31-day moving window centred on every calendar day to calibrate the method. The method (and some of its variants) is described in e.g. in Gutiérrez _et al._ 2018 as part of a comprehensive intercomparison experiment. EQM (and its variantes) is implemented in `downscaleR` (Bedia _et al._ 2017) using the `biasCorrection` function, with the options `method = "eqm"` and `extrapolation = "constant"` (including `precipitation = TRUE` and `pr.threshold = 1` for precipitation, which does not apply in this example). For EQMs (here used), the extra argument `window = c(30,1)` was included.
 
 ```{r}
 library(downscaleR)
@@ -638,18 +654,21 @@ After correction, the ensemble is built. We use the utility function `bindGrid.m
 ens.rcp85.eqm <- bindGrid.member(TXrcp85.eqm.list)
 ```
 
+And the corresponding ensemble construction is recorded in the provenance record:
+
 ```{r,highlight=TRUE}
 metadata.rcp85 <- metaclipR.Ensemble(output = ens.rcp85.eqm, graph.list = rcp85.list)
 ```
 ## Climate Index Calculation
 
+As in the previous example, the `climate4R.climdex` package is used to calculate the SU index:
 
 ```{r,echo=FALSE}
 load("data/SU_rcp85_eqm.rda", verbose = TRUE)
 ```
 
 ```{r,eval=FALSE}
-su.rcp85.eqm <- climate4R.climdex(tx = ens.rcp85.eqm, index.code = "SU")
+su.rcp85.eqm <- climdexGrid(tx = ens.rcp85.eqm, index.code = "SU")
 ```
 
 
@@ -660,8 +679,11 @@ metadata.rcp85 <- metaclipR.etccdi(graph = metadata.rcp85, output = "su.rcp85.eq
 
 ## Climatology
 
+The future climatology is next computed:
+
 ```{r}
-su.rcp85.clim <- climatology(su.rcp85.eqm, clim.fun = list(FUN = "mean", na.rm = TRUE), by.member = TRUE)
+su.rcp85.clim <- climatology(su.rcp85.eqm, clim.fun = list(FUN = "mean", na.rm = TRUE),
+                             by.member = TRUE)
 ```
 
 ```{r,highlight=TRUE}
@@ -672,6 +694,8 @@ metadata.rcp85 <- metaclipR.Climatology(graph = metadata.rcp85,
 
 ## Anomaly calculation
 
+The delta change is computed as an anomaly considering the climatology of the future index projections, taking the baseline observations as the reference climatology:
+
 ```{r}
 SU.rcp85.anomaly <- scaleGrid(grid = su.rcp85.clim, base = SU.clim)
 ```
@@ -681,7 +705,8 @@ metadata.rcp85 <- metaclipR.AnomalyCalculation(graph = metadata.rcp85,
                                                package = "transformeR",
                                                version = "1.3.3",
                                                fun = "scaleGrid",
-                                               arg.list = list(clim.fun = list(FUN = mean, na.rm = TRUE),
+                                               arg.list = list(clim.fun = list(FUN = mean,
+                                                                               na.rm = TRUE),
                                                                base = "SU.clim",
                                                                time.frame = "none",
                                                                by.member = TRUE,
@@ -698,14 +723,16 @@ As in the previous examples, the final map is created, indicating a number of cu
 ```{r,fig.width=12,fig.height=8}
 # Color palette
 delta.colors <- brewer.pal(11, "Spectral") %>% rev() %>% colorRampPalette()
-panel.lab <- gsub("^EUROCORDEX44_", "", ensemble.rcp85) %>% gsub(pattern = "_v1_rcp85$", replacement = "")
+panel.lab <- gsub("^EUROCORDEX44_", "", ensemble.rcp85) %>% gsub(pattern = "_v1_rcp85$",
+                                                                 replacement = "")
+main <- "Projected mean SU Index delta change (2041-2070)"
 spatialPlot(grid = SU.rcp85.anomaly,
             set.min = 0,
             set.max = 40,
             at = seq(0,40,1),
             col.regions = delta.colors(61),
             backdrop.theme = "countries",
-            main = "Projected mean SU Index delta change (2041-2070)",
+            main = main,
             names.attr = panel.lab)
 ```
  
@@ -719,7 +746,7 @@ metadata.rcp85 <- metaclipR.SpatialPlot(graph = metadata.rcp85,
                                                         at = seq(0,40,1),
                                                         col.regions = delta.colors(61),
                                                         backdrop.theme = "countries",
-                                                        main = "Projected mean SU Index delta change (2041-2070)",
+                                                        main = main,
                                                         names.attr = panel.lab))
 ```
 
