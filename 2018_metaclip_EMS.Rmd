@@ -20,7 +20,7 @@ output:
     toc: yes
     toc_float: yes
 documentclass: article
-abstract:   The objective of METAdata for CLImate Products ([METACLIP](http://metaclip.predictia.es/)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). The `metaclipR` package has been developed in order to ensure that all the operations undertaken under the [`climate4R`](http://meteo.unican.es/climate4R) framework for the R computing environment are adequately recorded following the METACLIP scheme. As a result, `metaclipR` interprets the commands and arguments passed to the different `climate4R` packages and maps them onto the semantic framework defined in the METACLIP [vocabularies](https://github.com/Predictia/metaclip), eventually leading to a RDF representation of data provenance. This vignette illustrates a case-study used in a recent paper by Iturbide et al. (submitted), to demonstrate the use of `metaclipR` and how the provenance of any research outcome can be explored through the use of the METACLIP visualization tool.
+abstract:   The objective of METAdata for CLImate Products ([METACLIP](http://www.metaclip.org)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). The `metaclipR` package has been developed in order to ensure that all the operations undertaken under the [`climate4R`](http://meteo.unican.es/climate4R) framework for the R computing environment are adequately recorded following the METACLIP scheme. As a result, `metaclipR` interprets the commands and arguments passed to the different `climate4R` packages and maps them onto the semantic framework defined in the METACLIP [vocabularies](https://github.com/metaclip/vocabularies), eventually leading to a RDF representation of data provenance. This vignette illustrates a case-study used in a recent paper by Iturbide _et al._ (submitted), to demonstrate the use of `metaclipR` and how the provenance of any research outcome can be explored through the use of the METACLIP interpreter, a web-based visualization tool.
 ---
 
 \fontfamily{cmr}
@@ -40,7 +40,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # Introduction
 
-The objective of METAdata for CLImate Products ([METACLIP](http://metaclip.predictia.es/)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). This requires the deployment of a comprehensive framework in order to track all relevant operations undertaken through complex data workflows. To this aim, METACLIP is based on semantics exploiting web standard Resource Description Framework (RDF), through the design of domain-specific extensions of standard vocabularies (e.g. [PROV-O](https://www.w3.org/TR/prov-o)) describing the different aspects involved in climate product generation. By introducing semantics to the metadata description, METACLIP ensures an effective communication of the information to a wide range of users with different levels of expertise. <br><br> 
+The objective of METAdata for CLImate Products ([METACLIP](http://www.metaclip.org)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). This requires the deployment of a comprehensive framework in order to track all relevant operations undertaken through complex data workflows. To this aim, METACLIP is based on semantics exploiting web standard Resource Description Framework (RDF), through the design of domain-specific extensions of standard vocabularies (e.g. [PROV-O](https://www.w3.org/TR/prov-o)) describing the different aspects involved in climate product generation. By introducing semantics to the metadata description, METACLIP ensures an effective communication of the information to a wide range of users with different levels of expertise. <br><br> 
 
 ***
 **NOTE**: In the following, only the `metaclipR` commands will be syntax-highlighted, while the rest of climate data operations performed with the different `climate4R` packages will be presented without syntax highlighting.
@@ -50,7 +50,7 @@ The objective of METAdata for CLImate Products ([METACLIP](http://metaclip.predi
 
 # Package installation
 
-`metaclipR` is currently hosted in [METACLIP's Public GitHub repository](https://github.com/Predictia/metaclipR). Using package `devtools` is highly recommended to ease installation:
+`metaclipR` is currently hosted in [METACLIP's Public GitHub repository](https://github.com/metaclip/metaclipR). Using package `devtools` is highly recommended to ease installation:
 
 ```{r,eval=FALSE}
 devtools::install_github("metaclip/metaclipR")
@@ -104,7 +104,6 @@ my_load <- function(file.url, verbose = TRUE) {
 ```
 
 The argument is the full URL to the target R data object (as a character string), that will be indicated when relevant.
-
 
 
 # **Example 1** - Calculation of a climate index from E-OBS data
@@ -241,13 +240,6 @@ metadata.EOBS <- metaclipR.loadeR(package = "loadeR",
                                                   latLim = lat))
 ```
 
-
-```{r,echo=FALSE,eval=FALSE}
-plot(metadata.EOBS$graph)
-metaclipR::graph2json(metadata.EOBS$graph, output.file = "/tmp/kk.json")
-
-```
-
 ## Climate index calculation
 
 The function `climdexGrid` is the workhorse for the calculation of all the ETCCDI core indices, indicated by the `index.code` argument. Additional specific arguments from the `climdex.pcic` package routines can be passed to this function (these are detailed in the help menu of `climdexGrid`). Here, we apply the default configuration of the SU index (Summer Days, i.e., the number of days per year recording a maximum temperature above 25ºC). 
@@ -306,7 +298,6 @@ The default behaviour of `spatialPlot` will produce a basic map without text and
 spatialPlot(SU.clim)
 ```
 
-
 In order to reproduce the figure 2a in Iturbide _et al._ (submitted), we add further customization options, indicating the same color palette and lines delimiting political boundaries:
 
 ```{r,fig.cap='Mean number of summer days (SU index from ETCCDI) for the 30-year climatological period 1971-2000. The figure reproduces Figure 2a from Iturbide et al.'}
@@ -348,7 +339,7 @@ embedFig(plot.fun = "spatialPlot",
          width = 950, height = 800, res = 150)
 ```
 
-The final output figure is available for metadata inspection and download in the METACLIP Interpreter page <http://metaclip-interpreter.predictia.es> 
+The final output figure is available for metadata inspection and download in the METACLIP Interpreter page <http://www.metaclip.org/interpreter> 
 
 
 # **Example 2**: Construction of a Euro-CORDEX RCM ensemble from the User Data Gateway and bias calculation
@@ -595,7 +586,7 @@ embedFig(plot.fun = "spatialPlot", full.metadata = ens.meta$graph,
 ```
 
 
-The final output figure is available in the example gallery of the METACLIP Interpreter <http://metaclip-interpreter.predictia.es>.
+The final output figure is available in the example gallery of the METACLIP Interpreter <http://www.metaclip.org/interpreter>.
 
 # **Example 3**: Bias correction of the RCM ensemble from Example 2
 
@@ -895,7 +886,7 @@ embedFig(plot.fun = "spatialPlot",
                          names.attr = panel.lab))
 ```
 
-As in the previous cases, the final output figure is available in the exmplae gallery of the METACLIP Interpreter page <http://metaclip-interpreter.predictia.es>.
+As in the previous cases, the final output figure is available in the exmplae gallery of the METACLIP Interpreter page <http://www.metaclip.org/interpreter>.
 
 # References
 
