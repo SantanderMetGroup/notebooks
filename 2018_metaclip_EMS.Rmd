@@ -6,12 +6,6 @@ date: "`r Sys.Date()`"
 encoding: "UTF8"
 urlcolor: blue
 output:
-  pdf_document:
-    highlight: pygments  
-    toc: yes
-    pandoc_args: [
-      "--number-sections",
-      "--number-offset=0"]
   html_document:
     fig_caption: yes
     highlight: pygments
@@ -19,6 +13,12 @@ output:
     theme: readable
     toc: yes
     toc_float: yes
+  pdf_document:
+    highlight: pygments  
+    toc: yes
+    pandoc_args: [
+      "--number-sections",
+      "--number-offset=0"]
 documentclass: article
 abstract:   The objective of METAdata for CLImate Products ([METACLIP](http://www.metaclip.org)) is to encode the metadata that ensures the traceability and reproducibility of any kind of climate product (data files, plots, maps ...). The `metaclipR` package has been developed in order to ensure that all the operations undertaken under the [`climate4R`](http://meteo.unican.es/climate4R) framework for the R computing environment are adequately recorded following the METACLIP scheme. As a result, `metaclipR` interprets the commands and arguments passed to the different `climate4R` packages and maps them onto the semantic framework defined in the METACLIP [vocabularies](https://github.com/metaclip/vocabularies), eventually leading to a RDF representation of data provenance. This vignette illustrates a case-study used in a recent paper by Iturbide _et al._ (submitted), to demonstrate the use of `metaclipR` and how the provenance of any research outcome can be explored through the use of the METACLIP interpreter, a web-based visualization tool.
 ---
@@ -150,7 +150,16 @@ E-OBS is a daily gridded observational dataset of reference in Europe (Haylock _
 showUDGDatasources()[7, ]
 ```
 
-Therefore, the dataset name is *E-OBS_v14_0.25regular*. Using this name as input value for the `Dataset.name` argument in `metaclipR.Dataset` function will therefore indicate that the dataset is known, and all the required metadata will be automatically annotated by the function. However, in this example we won't use the UDG E-OBS version, but a more recent one available from the KNMI server. The usage of known datasets from the UDG is later illustrated in Examples 2 and 3.
+Therefore, the dataset name is *E-OBS_v14_0.25regular*. Using this name as input value for the `Dataset.name` argument in `metaclipR.Dataset` function will therefore indicate that the dataset is known, and all the required metadata will be automatically annotated by the function. However, in this example we won't use the UDG E-OBS version, but a more recent one available from the KNMI server. The usage of known datasets from the UDG is later illustrated in Examples 2 and 3. In any case, "E-OBS" is a known observational dataset, already defined as an individual in the datasource ontology (since `datasource v0.5p`, Jun 2018):
+
+```{r,highlight=TRUE}
+"E-OBS" %in% knownClassIndividuals("Dataset")
+```
+The subclass of E-OBS can be also ascertained:
+
+```{r}
+getIndividualClass("E-OBS")
+```
 
 Similarly, KNMI is also a known institution, for which a specific individual exists:
 
@@ -163,7 +172,7 @@ When the data comes from the UDG data provider (see `knownClassIndividuals("Data
 
 ```{r,highlight=TRUE}
 eobs.url <- "http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/tx_0.25deg_reg_v17.0.nc"
-metadata.EOBS <- metaclipR.Dataset(Dataset.name = "E-OBS_v17_0.25regular",
+metadata.EOBS <- metaclipR.Dataset(Dataset.name = "E-OBS",
                                    DataProvider = "KNMI",
                                    DataProvider.URL = eobs.url,
                                    Dataset.subclass = "ObservationalDataset",
@@ -385,7 +394,7 @@ TXh.list <- lapply(ensemble.h, function(x) {
 ```
 ```{r,echo=FALSE}
 # save(TXh.list, file = "data/histlist.rda", compress = "xz")
-load("data/histlist.rda")
+load("data/histlist.rda", v = T)
 ```
 
 ***
@@ -693,6 +702,7 @@ TXrcp85.eqm.list <- lapply(1:length(TXrcp85.list), function(i) {
 ```
 
 ```{r,echo=FALSE}
+gc()
 load("data/rcp85_eqm_list.rda")
 ```
 
