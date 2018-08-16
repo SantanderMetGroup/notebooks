@@ -158,7 +158,7 @@ climate4R functionalities allow working with model ensembles through the `member
 lapply(TXh.list, function(x) getShape(x))
 ```
 
-Function `intersectGrid.time` performs time subsetting of a collection of grids, to the dates they have in common:
+Function `intersectGrid` performs time subsetting of a collection of grids, to the dates they have in common:
 
 ```{r intersecttime, message=FALSE, warning=FALSE}
 # Temporal intersection
@@ -255,7 +255,7 @@ spatialPlot(climatology(TXf.ens.sd), at = seq(0, 6, .5),
 
 ## ETCCDI index calculation (SU) from raw data
 
-Next the raw SU index (summer days) is calculated for the whole ensemble (object `SUf.ens`) and future period 2071-2100, in a single line with function `climdexGrid`:
+Next the raw SU index (summer days) is calculated for the whole ensemble and future period 2071-2100 (object `SUf.ens`), in a single line with function `climdexGrid`:
 
 ```{r climdexraw, message=FALSE, warning=FALSE}
 SUf.ens <- climdexGrid(tx = TXf.ens, index.code = "SU")
@@ -356,7 +356,7 @@ SU.Z.1m <- lapply(SU.Z.cdx, function(x)
 SU.Z <- c(list(SU), SU.Z.cdx, SU.Z.1m)
 ```
 
-Finally `temporalPlot` is used to generate Figure 7 (Fig. 7 in the manuscript). The nearest point to Zaragoza (Spain) is selected via arguments `latLim` and `lonLim`:
+Finally `temporalPlot` is used to generate Figure  \ref{fig:fig7} (Fig. 7 in the manuscript). The nearest point to Zaragoza (Spain) is selected via arguments `latLim` and `lonLim`:
 
 ```{r fig7, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig7} Annual summer days time series for a single gridbox (the one closest to Zaragoza, Spain) computed form (red) the original RCM daily maximum temperature data, and (blue) daily maximum temperature bias corrected data using E-OBS (black). When it comes to CORDEX data, continuous lines correspond to the ensemble mean and the shadowed area to the range (uncertainty). Dashed lines correspond to the 1st member of the ensemble. Fig. 7 in the manuscript."}
 cols  <- c("black", rep(c("red", "red", "blue"), 2))
