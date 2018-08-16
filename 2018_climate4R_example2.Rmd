@@ -1,5 +1,5 @@
 ---
-title: "Full code for Example 2 of the paper `climate4R: An Ecosystem of R packages for Climate Data Access,\\ Post-processing and Bias Correction'"
+title: "Full code for Example 2 of the paper `climate4R: An R-based Framework for Climate Data Access, Post-processing and Bias Correction'"
 author: "M. Iturbide, J. Bedia, S. Herrera, J. Baño, J. Fernández, M. D. Frías, R. Manzanas, D. San Martín, E. Cimadevilla, A.S. Cofiño, J. M. Gutiérrez"
 date: "`r Sys.Date()`"
 csl: elsarticle.csl
@@ -31,7 +31,7 @@ options(java.parameters = "-Xmx8000m")
 
 # Introduction
 
-This worked example contains the full code that reproduces the 2nd example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 6 of the manuscript). The main section is divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting (1) package installation and (2) the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively:
+This worked example contains the full code that reproduces the 2nd example of the paper "climate4R: An R-based Framework for Climate Data Access, Post-processing and Bias Correction" (Sec. 6 of the manuscript). The main section is divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting (1) package installation and (2) the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively:
 
 (1) Package installation:
 ```{r, eval=FALSE}

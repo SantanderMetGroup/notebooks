@@ -1,5 +1,5 @@
 ---
-title: "Full code for Example 1 of the paper `climate4R: An Ecosystem of R packages for Climate Data Access,\\ Post-processing and Bias Correction'"
+title: "Full code for Example 1 of the paper `climate4R: An R-based Framework for Climate Data Access, Post-processing and Bias Correction'"
 author: "M. Iturbide, J. Bedia, S. Herrera, J. Baño, J. Fernández, M. D. Frías, R. Manzanas, D. San Martín, E. Cimadevilla, A.S. Cofiño, J. M. Gutiérrez"
 date: "`r Sys.Date()`"
 csl: elsarticle.csl
@@ -31,7 +31,7 @@ urlcolor: blue
 options(java.parameters = "-Xmx8000m")
 ```
 
-This worked example contains the full code that reproduces the 1rst example of the paper "climate4R: An Ecosystem of R packages for Climate Data Access, Post-processing and Bias Correction" (Sec. 5 of the manuscript). Here, the same titles are used for the main sections (see index). These are divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting package installation and the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively.
+This worked example contains the full code that reproduces the 1rst example of the paper "climate4R: An R-based Framework for Climate Data Access, Post-processing and Bias Correction" (Sec. 5 of the manuscript). Here, the same titles are used for the main sections (see index). These are divided in additional subsections to help with the understanding of the different code chunks. All operations hereinafter are performed with the core packages of climate4R, excepting package installation and the creation of color palettes, for which packages `devtools` and `RColorBrewer` are used respectively.
 climate4R packages are installed by means of the `devtools' package:
 
 
@@ -99,8 +99,8 @@ In this case, the only non-standard parameter in the E-OBS dataset is the variab
 
 ```{r eobsdictionary, message=FALSE, warning=FALSE, eval=FALSE}
 file.create("dicEOBS.dic")
-writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,
-             cell_method,offset,scale,deaccum,derived,interface",
+writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound, cell_metho
+d,offset,scale,deaccum,derived,interface",
              "tasmax,tx,24h,0,24,max,0,1,0,0,"), "dicEOBS.dic")
 ```
 
@@ -186,7 +186,8 @@ Contrarily to the case of the E-OBS dataset, the variable name is standard, but 
 
 ```{r cordexdic, message=FALSE, warning=FALSE,eval=FALSE}
 file.create("dicCDX.dic")
-writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,cell_method,offset,scale,deaccum,derived,interface",
+writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,cell_meto
+d,offset,scale,deaccum,derived,interface",
              "tasmax,tasmax,24h,0,24,max,-273.15,1,0,0,"), "dicCDX.dic")
 ```
 
@@ -387,7 +388,7 @@ SUf.interp <- interpGrid(SUf, getGrid(TX))
 SUf.interp <- gridArithmetics(SUf.interp, eobs.mask, operator = "+")
 ```
 
-Finally, the maps of raw (Fig. \ref{fig:fig5a}) and bias corrected (Fig. \ref{fig:fig5}) SU index for the EC-EARTH driven, RCP8.5 scenario (period 2071-2100) are plotted resulting in Figures \ref{fig:fig5a} (Not shown in the manuscript) and \ref{fig:fig5} (Fig. 5 in the manuscript).
+Finally, the maps of raw and bias corrected SU index for the EC-EARTH driven, RCP8.5 scenario (period 2071-2100) are plotted, resulting in Figures \ref{fig:fig5a} (Not shown in the manuscript) and \ref{fig:fig5} (Fig. 5 in the manuscript).
 
 ```{r fig5a, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig5a}Southern Europe summer days for the EC-EARTH driven, RCP8.5 scenario in the future period 2071-2100 (calculated with package climate4R.climdex from daily data). Not shown in the manuscript."}
 spatialPlot(climatology(SUf.interp), backdrop.theme = "countries", 
