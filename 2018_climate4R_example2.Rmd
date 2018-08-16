@@ -86,11 +86,11 @@ loginUDG(username = "userUDG", password = "pswrdUDG")
 
 If the data is to be loaded from the UDG, we can use function `UDG.datasets` to print the inventory of the available public and harmonized **UDG** datasets, where the name, type and url are specified (see Table 1 in the manuscript). Additionally, we can use the "name" (`UDG.datasets()["name"]`) of the desired dataset instead of passing the complete url to `loadGridData`. If this is the case, we do not need to create a dictionary, since the data is harmonized by default. Nevertheless, we still can use the complete url (`UDG.datasets()["url"]`) to access the data in its original form. 
 
-For example, if we are interested in loading observations from the **E-OBS** dataset at 0.25 degrees resolution we can filter the names returned by `UDG.datasets` passing an appropriate pattern to function `grepl`:
+For example, if we are interested in loading observations from the **E-OBS** dataset at 0.25 degrees resolution we can filter the names returned by `UDG.datasets` passing an appropriate pattern to the optional argument `pattern`:
 
 ```{r eobs, message=FALSE, warning=FALSE}
-models <- UDG.datasets()
-eobs <- models$name[grepl("E-OBS.*0.25", models$name)]
+models <- UDG.datasets(pattern = "E-OBS.*0.25")
+eobs <- models$name
 ```
 
 
@@ -113,8 +113,8 @@ TX <- loadGridData(eobs,
 To load historical CORDEX data for the Iberian Peninsula we also filtered the names in `UDG.datasets()` with an appropriate pattern:
 
 ```{r cordexens, message=FALSE, warning=FALSE}
-models <- UDG.datasets()
-ensemble.h <- models$name[grepl("EUROCORDEX44.*historical", models$name)][1:6]
+models <- UDG.datasets(pattern = "CORDEX-EUR44.*historical")
+ensemble.h <- models$name[1:6]
 ```
 
 Unlike the first example of the paper (see [2018_climate4R_example1.pdf](https://github.com/SantanderMetGroup/notebooks/blob/master/2018_climate4R_example1.pdf)), here we considered 6 regional climate models (RCMs) from EURO-CORDEX, thus, object `ensemble.h` contains 6 names. Everything can be loaded in a single step by combining function `loadGridData` with `lapply`:
@@ -132,7 +132,7 @@ TXh.list <- lapply(ensemble.h, function(x)
 We repeat the operation for the RCP8.5 scenario:
 
 ```{r loadrcp, message=FALSE, warning=FALSE}
-ensemble.f <- as.character(models$name[grepl("EUROCORDEX44.*rcp85", models$name)])[1:6]
+ensemble.f <- UDG.datasets(pattern = "CORDEX-EUR44.*rcp85")$name[1:6]
 TXf.list <- lapply(ensemble.f, function(x) 
                           loadGridData(dataset = x,
                           var = "tasmax",
@@ -161,8 +161,10 @@ Function `intersectGrid.time` performs time subsetting of a collection of grids,
 
 ```{r intersecttime, message=FALSE, warning=FALSE}
 # Temporal intersection
-TXh.list <- do.call("intersectGrid.time", list(TXh.list, which.return = 1:6)) 
-TXf.list <- do.call("intersectGrid.time", list(TXf.list, which.return = 1:6)) 
+TXh.list <- intersectGrid(TXh.list, type = "temporal",
+                                          which.return = 1:6) 
+TXf.list <- intersectGrid(TXf.list, type = "temporal",
+                                          which.return = 1:6)
 ```
 
 If there is not spatial consistency, we can use `interpGrid` to interpolate all `grid`s to the same spatial structure. Despite this not being the case, here we perform interpolation of CORDEX data to the E-OBS spatial grid in order to apply a land-sea mask (by means of function `gridArithmetics`) and produce comparable map figures.
@@ -192,8 +194,8 @@ Finally, we crate the multi-member grids for the historical and RCP8.5 scenarios
 
 ```{r multimember, message=FALSE, warning=FALSE}
 # Create a multimember grid
-TXh.ens <- do.call("bindGrid.member", TXh.list)
-TXf.ens <- do.call("bindGrid.member", TXf.list)
+TXh.ens <- bindGrid(TXh.list, dimension = "member")
+TXf.ens <- bindGrid(TXf.list, dimension = "member")
 ```
 
 Note that function `spatialPlot` recognizes a multi-member grid and displays a map for each member. For instance, next we plot the ensemble of the RCP8.5 scenario to generate Figure \ref{fig:fig8a} (Fig. 8(above) in the manuscript)):
@@ -204,7 +206,7 @@ spatialPlot(climatology(TXf.ens), at = seq(5, 33, 1), backdrop.theme = "countrie
 ```
 
 
-In order to calculate the bias of each model with respect to the observations and generate Figure \ref{fig:fig8b} (Fig. 8(below) in the manuscript) we apply function `aggregateGrid`, `gridArithmetics`, `bindGridMember` and `spatialPlot` as follows:
+In order to calculate the bias of each model with respect to the observations and generate Figure \ref{fig:fig8b} (Fig. 8(below) in the manuscript) we apply function `aggregateGrid`, `gridArithmetics`, `bindGrid` and `spatialPlot` as follows:
 
 ```{r calcbias, message=FALSE, warning=FALSE}
 # Create a multimember grid
@@ -222,7 +224,7 @@ txHist_iberia.ann <- NULL
 
 
 ```{r multimemberbias, message=FALSE, warning=FALSE}
-TXh.bias.ens <- do.call("bindGrid.member", TXh.list.bias)
+TXh.bias.ens <- bindGrid(TXh.list.bias, dimension = "member")
 ```
 
 ```{r fig8b, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8b}Bias of the maximum temperature (ºC) in Iberia for an ensemble of 6 CORDEX RCMs w.r.t. E-OBS in the historical period 1971-2000. Fig. 8(below) in the manuscript."}
@@ -346,22 +348,22 @@ SU <- climdexGrid(tx = TX, index.code = "SU")
 SUh.ens <- climdexGrid(tx = TXh.ens, index.code = "SU")
 ```
 
-We also extract the nearest grid box to Zaragoza for E-OBS (object `SU.Z.eobs`) and CORDEX (object `SU.Z.cdx`). The 1rst memeber of CORDEX is also extracted and everything is listed in object `SU.Z` for plotting:
+For visualization purposes, the 1rst memeber of CORDEX data is extracted and everything (E-OBS, the ensemble of CORDEX, and the 1st member of CORDEX) is listed in object `SU.Z` for plotting:
 
 ```{r preparetemporalplot, message=FALSE, warning=FALSE}
-SU.Z.eobs <- subsetGrid(SU, latLim = 41.64, lonLim = -0.89)
-SU.Z.cdx <- lapply(list(SUh.ens, SUf.ens, SUf.ens.bc), function(x)
-                        subsetGrid(x, latLim = 41.64, lonLim = -0.89))
+SU.Z.cdx <- list(SUh.ens, SUf.ens, SUf.ens.bc)
 SU.Z.1m <- lapply(SU.Z.cdx, function(x)
                         subsetGrid(x, members = 1))
-SU.Z <- c(list(SU.Z.eobs), SU.Z.cdx, SU.Z.1m)
+SU.Z <- c(list(SU), SU.Z.cdx, SU.Z.1m)
 ```
 
-Finally `temporalPlot` is used to generate Figure 7 (Fig. 7 in the manuscript):
+Finally `temporalPlot` is used to generate Figure 7 (Fig. 7 in the manuscript). The nearest point to Zaragoza (Spain) is selected via arguments `latLim` and `lonLim`:
 
 ```{r fig7, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig7} Annual summer days time series for a single gridbox (the one closest to Zaragoza, Spain) computed form (red) the original RCM daily maximum temperature data, and (blue) daily maximum temperature bias corrected data using E-OBS (black). When it comes to CORDEX data, continuous lines correspond to the ensemble mean and the shadowed area to the range (uncertainty). Dashed lines correspond to the 1st member of the ensemble. Fig. 7 in the manuscript."}
 cols  <- c("black", rep(c("red", "red", "blue"), 2))
 temporalPlot(SU.Z,
+             latLim = 41.64, 
+             lonLim = -0.89,
              cols = cols,
              lty = rep(c(1,3), each = 4),
              lwd = 0.8,
@@ -442,10 +444,10 @@ prf <- lapply(ensemble.f, function(x)
                           lonLim = lon,
                           latLim = lat,
                           years = 2071:2100))
-prh.t <- do.call("intersectGrid.time", list(prh, which.return = 1:6)) 
-prf.t <- do.call("intersectGrid.time", list(prf, which.return = 1:6)) 
-prh.ens <- do.call("bindGrid.member", prh.t)
-prf.ens <- do.call("bindGrid.member", prf.t)
+prh.t <- intersectGrid(prh, type = "temporal", which.return = 1:6)
+prf.t <- intersectGrid(prf, type = "temporal", which.return = 1:6)
+prh.ens <- bindGrid(prh.t, dimension = "member")
+prf.ens <- bindGrid(prf.t, dimension = "member")
 ```
 
 Next the CDD index is calculated (function `climdexGrid`), and regridded (function `interpGrid`) to the spatial structure given by the observational data (`getGrid(pr)`). Then, the ensemble mean (object `CDDf.ens.mean`) and deviation (object `CDDf.ens.sd`) are calculated with `aggregateGrid`.

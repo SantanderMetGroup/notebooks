@@ -70,7 +70,7 @@ lat <- c(35, 46)
 As described in the paper, the SU index (summer days) can be obtained on-the-fly by loading maximum temperature data with function `loadGridData` and by the following argument settings: `aggr.m = "sum"`, `condition = "GT"` and `threshold = 25`. First we load E-OBS observational data by pointing to a NetCDF file via OPeNDAP. Previous to loading, function `dataInventory` might be applied for an overview of the dataset, which returns an inventory (object `di`) of the available variables names, units, coordinates, etc.  
 
 ```{r, message=FALSE, warning=FALSE}
-eobs<-"http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/tx_0.25deg_reg_v16.0.nc"
+eobs<-"http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/tx_0.25deg_reg_v17.0.nc"
 di <- dataInventory(eobs)
 ```
 
@@ -162,8 +162,8 @@ list.files(dirh, recursive = T)
 ```
 
 ```{r listoceanofiles, echo=FALSE, message=FALSE, warning=FALSE}
-dir <- "/oceano/gmeteo/DATA/ESGF/DATASETS/CORDEX/output/EUR-44/SMHI/ICHEC-EC-EARTH/rcp85/r12i1p1/RCA4/v1/day/tasmax/"
-dirf <- "/oceano/gmeteo/DATA/ESGF/DATASETS/CORDEX/output/EUR-44/SMHI/ICHEC-EC-EARTH/historical/r12i1p1/RCA4/v1/day/tasmax/"
+dir <- "/oceano/gmeteo/DATA/ESGF/DATASETS/CORDEX/output/EUR-44/SMHI/ICHEC-EC-EARTH/historical/r12i1p1/RCA4/v1/day/tasmax/"
+dirf <- "/oceano/gmeteo/DATA/ESGF/DATASETS/CORDEX/output/EUR-44/SMHI/ICHEC-EC-EARTH/rcp85/r12i1p1/RCA4/v1/day/tasmax/"
 
 list.files(dir, recursive = T)
 ```
@@ -186,8 +186,7 @@ Contrarily to the case of the E-OBS dataset, the variable name is standard, but 
 
 ```{r cordexdic, message=FALSE, warning=FALSE,eval=FALSE}
 file.create("dicCDX.dic")
-writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,
-             cell_method,offset,scale,deaccum,derived,interface",
+writeLines(c("identifier,short_name,time_step,lower_time_bound,upper_time_bound,cell_method,offset,scale,deaccum,derived,interface",
              "tasmax,tasmax,24h,0,24,max,-273.15,1,0,0,"), "dicCDX.dic")
 ```
 
@@ -313,20 +312,21 @@ spatialPlot(climatology(CCsignal.bc), backdrop.theme = "countries",
 ```
 
 Other useful plotting function is `temporalPlot` that displays temporal series of multiple datasets
-and periods on the same plot. Here we plot the series corresponding to a single grid box (the one nearest to Zaragoza, Spain), therefore, a previous spatial subsetting is done with function `subsetGrid` (`latLim = 41.64` and `lonLim = -0.89`). As a result object `ts` is obtained, a list that contains the SU index for E-OBS and CORDEX. If several grid boxes are considered (e.g. the whole domain) `temporalPlot` performs the spatial (`lat` and `lon` dimensions) aggregation before plotting (the `mean` is computed by default, type `?temporalPlot`).
+and periods on the same plot. Here we plot the series corresponding to a single grid box (`latLim = 41.64`, `lonLim = -0.89`). If several grid boxes are considered (e.g. the whole domain) `temporalPlot` performs the spatial (`lat` and `lon` dimensions) aggregation before plotting (the `mean` is computed by default, type `?temporalPlot`).
 
 Note that function `temporalPlot` is based on `lattice` and arguments from function `xyplot` are optionally passed to argument `xyplot.custom`, allowing for a fine tuning of multiple graphical parameters. The next code chunk generates Figure \ref{fig:fig4} (Fig. 4 in the manuscript).
 
 
 ```{r fig4, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig4}Annual summer days time series for a single gridbox (Zaragoza, Spain) for the observations (E-OBS) and the projection (original and bias corrected) in the historical and future periods. Fig. 4 in the manuscript."}
-ts <- lapply(list("E-OBS" = SU.annual, "CDX_hist" = SUh.interp, 
-                 "CDX_rcp85" = SUf.interp, "CDX_rcp85_corrected" = SUf.bc.annual), 
-            function(x)  subsetGrid(x, latLim = 41.64, lonLim = -0.89))
+
 cols = c("black", "red", "red", "blue")
-temporalPlot(ts, cols = cols, lwd = 0.8, xyplot.custom = list(ylab = "", ylim = c(70, 220),
-  key = list(space = "top", lines = list(pch = 15, col = cols, cex = .5), 
-             text = list(names(ts), 
-                         cex = .7), columns = 2)))
+temporalPlot("E-OBS" = SU.annual, 
+             "CDX_hist" = SUh.interp, 
+             "CDX_rcp85" = SUf.interp, 
+             "CDX_rcp85_corrected" = SUf.bc.annual, 
+             latLim = 41.64, lonLim = -0.89, 
+             cols = cols, lwd = 0.8, 
+             xyplot.custom = list(ylab = "", ylim = c(70, 220)))
 ```
 
 
