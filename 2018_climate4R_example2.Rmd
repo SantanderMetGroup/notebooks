@@ -199,9 +199,9 @@ TXh.ens <- bindGrid(TXh.list, dimension = "member")
 TXf.ens <- bindGrid(TXf.list, dimension = "member")
 ```
 
-Note that function `spatialPlot` recognizes a multi-member grid and displays a map for each member. For instance, next we plot the ensemble of the RCP8.5 scenario to generate Figure \ref{fig:fig8a} (Fig. 8(above) in the manuscript)):
+Note that function `spatialPlot` recognizes a multi-member grid and displays a map for each member. For instance, next we plot the ensemble of the RCP8.5 scenario to generate Figure \ref{fig:fig8a} (Fig. 8(top) in the manuscript)):
 
-```{r fig8a, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8a}Maximum temperature (ºC) in Iberia for an ensemble of 6 CORDEX RCMs under the RCP8.5 scenario and for future period 2071-2100. Fig. 8(above) in the manuscript."}
+```{r fig8a, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8a}Maximum temperature (ºC) in Iberia for an ensemble of 6 CORDEX RCMs under the RCP8.5 scenario and for future period 2071-2100. Fig. 8(top) in the manuscript."}
 spatialPlot(climatology(TXf.ens), at = seq(5, 33, 1), backdrop.theme = "countries",
             col.regions = colorRampPalette(colstx), layout = c(3, 2), as.table = TRUE)
 ```
@@ -268,13 +268,13 @@ SUf.ens.mean <- aggregateGrid(SUf.ens, aggr.mem = list(FUN = mean, na.rm = TRUE)
 SUf.ens.sd <- aggregateGrid(SUf.ens, aggr.mem = list(FUN = sd, na.rm = TRUE))
 ```
 
-And finally, we plot the results to generate Figures \ref{fig:fig6above1} and \ref{fig:fig6above2} (Figs. 6(above, left) and 6(above, right) in the manuscript:
+And finally, we plot the results to generate Figures \ref{fig:fig6top1} and \ref{fig:fig6top2} (Figs. 6(top, left) and 6(top, right) in the manuscript:
 
-```{r fig6above1, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6above1} Summer days in Iberia for the future period 2071-2100 computed from the original RCM daily maximum temperature data. The figure shows the ensemble mean. Fig. 6(above, left) in the manuscript."}
+```{r fig6top1, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6top1} Summer days in Iberia for the future period 2071-2100 computed from the original RCM daily maximum temperature data. The figure shows the ensemble mean. Fig. 6(top, left) in the manuscript."}
 spatialPlot(climatology(SUf.ens.mean), backdrop.theme = "countries", 
             at = seq(0, 260, 10), col.regions = colorRampPalette(colsindex))
 ```
-```{r fig6above2, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6above2} Standard deviation of summer days in Iberia for the future period 2071-2100 computed from the original RCM daily maximum temperature data. The figure shows the spread of the ensemble. Fig. 6(above, right) in the manuscript."}
+```{r fig6top2, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6top2} Standard deviation of summer days in Iberia for the future period 2071-2100 computed from the original RCM daily maximum temperature data. The figure shows the spread of the ensemble. Fig. 6(top, right) in the manuscript."}
 spatialPlot(climatology(SUf.ens.sd), set.max = 50, backdrop.theme = "countries", 
             at = seq(0, 50, 5), col.regions = colorRampPalette(colssd))
 ```
@@ -385,7 +385,7 @@ rm(list=c("SU.Z", "SU","SUh.ens","SU.Z.eobs","SU.Z.cdx","SU.Z.1m","SUf.ens.bc.me
 
 ## Calculation of the ETCCDI index CDD (Consecutive Dry Days)
 
-This section replicates the procedures shown above but for calculating a precipitation based index, i.e. CDD (consecutive dry days). Function `climdexShow` displays an overview of the available ETCDDI indices:
+This section replicates the procedures shown top but for calculating a precipitation based index, i.e. CDD (consecutive dry days). Function `climdexShow` displays an overview of the available ETCDDI indices:
 
 ```{r showindexes, eval= FALSE, message=FALSE, warning=FALSE}
 climdexShow()[,1:6]
