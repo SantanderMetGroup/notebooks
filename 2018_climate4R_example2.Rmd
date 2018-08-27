@@ -1,6 +1,6 @@
 ---
-title: "Full code for Example 2 of the paper `climate4R: An R-based Framework for Climate Data Access, Post-processing and Bias Correction'"
-author: "M. Iturbide, J. Bedia, S. Herrera, J. Baño, J. Fernández, M. D. Frías, R. Manzanas, D. San Martín, E. Cimadevilla, A.S. Cofiño, J. M. Gutiérrez"
+title: "Full code for Example 2 of the paper `climate4R: An R-based Open Framework for Reproducible Climate Data Access and Post-processing'"
+author: "M. Iturbide, J. Bedia, S. Herrera, J. Baño-Medina, J. Fernández, M. D. Frías, R. Manzanas, D. San Martín, E. Cimadevilla, A.S. Cofiño, J. M. Gutiérrez"
 date: "`r Sys.Date()`"
 csl: elsarticle.csl
 header-includes:
