@@ -15,7 +15,7 @@ An overview of the notebooks so far included and the corresponding published art
 | 2018_visualizeR_EMS | An R package to visualize and communicate uncertainty in seasonal climate prediction | https://doi.org/10.1016/j.envsoft.2017.09.008
 | 2018_ECOMS-UDG_ClimateServices | The ECOMS User Data Gateway: Towards seasonal forecast data provision and research reproducibility in the era of Climate Services | http://dx.doi.org/10.1016/j.cliser.2017.07.001
 | 2018_fireDanger_ClimateServices | Seasonal predictions of Fire Weather Index: Paving the way for their operational applicability in Mediterranean Europe | http://dx.doi.org/10.1016/j.cliser.2017.04.001
-| 2018_climate4R_example* | climate4R: An R-based Open Framework for Reproducible Climate Data Access and Post-processing | _submitted_
+| 2018_climate4R_example* | climate4R: An R-based Open Framework for Reproducible Climate Data Access and Post-processing | https://doi.org/10.1016/j.envsoft.2018.09.009
 | 2018_metaclip_EMS* | METACLIP: A semantic provenance framework for climate products | _submitted_
 | 2018_drought4R_NCOMMS* | Exacerbated fires in Mediterranean Europe due to anthropogenic warming projected with non-stationary climate-fire models | _submitted_
 
