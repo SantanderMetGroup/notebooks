@@ -237,18 +237,18 @@ spatialPlot(climatology(TXh.bias.ens), at = seq(-10, 10, 1), backdrop.theme = "c
 We can use function `aggregateGrid` to for example calculate the multi-member mean and deviation of the ensemble:
 
 ```{r aggrmeansd, message=FALSE, warning=FALSE}
-TXf.ens.mean <- aggregateGrid(TXf.ens, aggr.mem = list(FUN = mean, na.rm = TRUE))
-TXf.ens.sd <- aggregateGrid(TXf.ens, aggr.mem = list(FUN = sd, na.rm = TRUE))
+TXf.ens.mean <- aggregateGrid(climatology(TXf.ens), aggr.mem = list(FUN = mean, na.rm = TRUE))
+TXf.ens.sd <- aggregateGrid(climatology(TXf.ens), aggr.mem = list(FUN = sd, na.rm = TRUE))
 ```
 
 Next we generate the corresponding Figures \ref{fig:fig8c} and \ref{fig:fig8d} (Not shown in the manuscript).
 
 ```{r fig8c, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8c} Ensemble mean of maximum temperature (ºC) in Iberia for  6 CORDEX RCMs under the RCP8.5 scenario and for future period 2071-2100. Not shown in the manuscript."}
-spatialPlot(climatology(TXf.ens.mean), at = seq(5, 33, 1),
+spatialPlot(TXf.ens.mean, at = seq(5, 33, 1),
             col.regions = colorRampPalette(colstx), backdrop.theme = "countries")
 ```
 ```{r fig8d, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig8d} Ensemble standard deviation (sd) of maximum temperature (ºC) in Iberia for 6 CORDEX RCMs under the RCP8.5 scenario and for future period 2071-2100. Not shown in the manuscript."}
-spatialPlot(climatology(TXf.ens.sd), at = seq(0, 6, .5),
+spatialPlot(TXf.ens.sd, at = seq(0, 6, .5),
             col.regions = colorRampPalette(colssd), backdrop.theme = "countries")
 ```
 
@@ -264,18 +264,18 @@ SUf.ens <- climdexGrid(tx = TXf.ens, index.code = "SU")
 We calculate the ensemble mean and deviation using function `aggregateGrid`:
 
 ```{r aggrmeansdSU, message=FALSE, warning=FALSE}
-SUf.ens.mean <- aggregateGrid(SUf.ens, aggr.mem = list(FUN = mean, na.rm = TRUE))
-SUf.ens.sd <- aggregateGrid(SUf.ens, aggr.mem = list(FUN = sd, na.rm = TRUE))
+SUf.ens.mean <- aggregateGrid(climatology(SUf.ens), aggr.mem = list(FUN = mean, na.rm = TRUE))
+SUf.ens.sd <- aggregateGrid(climatology(SUf.ens), aggr.mem = list(FUN = sd, na.rm = TRUE))
 ```
 
 And finally, we plot the results to generate Figures \ref{fig:fig6top1} and \ref{fig:fig6top2} (Figs. 6(top, left) and 6(top, right) in the manuscript:
 
 ```{r fig6top1, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6top1} Summer days in Iberia for the future period 2071-2100 computed from the original RCM daily maximum temperature data. The figure shows the ensemble mean. Fig. 6(top, left) in the manuscript."}
-spatialPlot(climatology(SUf.ens.mean), backdrop.theme = "countries", 
+spatialPlot(SUf.ens.mean, backdrop.theme = "countries", 
             at = seq(0, 260, 10), col.regions = colorRampPalette(colsindex))
 ```
 ```{r fig6top2, message=FALSE, warning=FALSE, fig.cap="\\label{fig:fig6top2} Standard deviation of summer days in Iberia for the future period 2071-2100 computed from the original RCM daily maximum temperature data. The figure shows the spread of the ensemble. Fig. 6(top, right) in the manuscript."}
-spatialPlot(climatology(SUf.ens.sd), set.max = 50, backdrop.theme = "countries", 
+spatialPlot(SUf.ens.sd, set.max = 50, backdrop.theme = "countries", 
             at = seq(0, 50, 5), col.regions = colorRampPalette(colssd))
 ```
 
