@@ -6,13 +6,6 @@ date: "`r Sys.Date()`"
 encoding: "UTF8"
 urlcolor: blue
 output:
-  html_document:
-    fig_caption: yes
-    highlight: pygments
-    number_sections: yes
-    theme: readable
-    toc: yes
-    toc_float: yes
   pdf_document:
     highlight: pygments  
     toc: yes
@@ -21,6 +14,13 @@ output:
       "--number-sections",
       "--number-offset=0"]
     latex_engine: pdflatex
+  html_document:
+    fig_caption: yes
+    highlight: pygments
+    number_sections: yes
+    theme: readable
+    toc: yes
+    toc_float: yes
 documentclass: article
 abstract: The R package `downscaleR` for statistical downscaling of climate information (SD) covers the most popular approaches (Model Output Statistics –including the so called "bias correction" methods– and Perfect Prognosis) and state-of-the-art techniques. It has been conceived to work primarily with daily data and can be used in the framework of both seasonal forecasting and climate change studies. Its full integration within the [climate4R](http://www.meteo.unican.es/climate4r) framework (Iturbide _et al._ 2019) makes possible the development of end-to-end downscaling applications, from data retrieval to model building, validation and prediction, bringing to climate scientists and practitioners a unique comprehensive framework for SD model development. This notebook reproduces the results presented in the paper, showcasing the main characteristics and functioning of perfect-prog downscaling with `climate4R`, including its integration with the VALUE validation framework (Project VALUE, http://www.value-cost.eu) that allows for undertaking a comprehensive evaluation of SD methods.
 ---
@@ -163,7 +163,7 @@ require(magrittr)
 ```
 
 ```{r,echo=FALSE,eval=TRUE}
-load("../iberia.Rdata")
+load("iberia.Rdata")
 ```
 
 In order to keep Experiment 1 and 2 self-contained, tha data are independently read in both cases, even though the dataset used for this experiment is a subset of the pan-European datasets used for [Experiment 2](#exp2). Therefore, in this section we first delimit the Iberian Peninsula subregion from the PRUDENCE regions used in VALUE (these are indicated in the paper, with further details). The vector layer delimiting these regions is a built-in dataset in package `visualizeR`, and therefore extracting the bounding box for Iberia is straightforward:
@@ -600,7 +600,7 @@ grid.list <- lapply(variables, function(x) {
 })
 x.eur <- makeMultiGrid(grid.list)
 ```
-
+  
 ```{r}
 value <- file.path(find.package("VALUE"), "example_datasets", "VALUE_ECA_86_v2.zip")
 y <- loadStationData(dataset = value,
@@ -614,7 +614,7 @@ y_bin <- binaryGrid(y, condition = "GE", threshold = 1)
 The following code prepares a map displaying the predictor set reference grid and the predictand locations:
 
 ```{r,eval=TRUE,echo=FALSE}
-load("../europe.Rdata")
+load("europe.Rdata")
 ```
 
  
@@ -851,6 +851,7 @@ groups <- rep(measure.names, each = length(methods))
 arg.list <- c(var.list, corr.list, rmse.list)
 arg.list[["group.index"]] <- groups
 arg.list[["rev.colors"]] <- TRUE
+arg.list[["bwplot.custom"]] <- list(ylim = c(0.1, 1.3))
 ```
 
 
@@ -1029,7 +1030,7 @@ The figure is produced with `spatialPlot`. Here, we use the color palettes provi
 ```{r, fig.width = 9, eval = TRUE}
 colsindex <- rev(RColorBrewer::brewer.pal(n = 9, "RdBu"))
 cb <- colorRampPalette(colsindex)(100)
-spatialPlot(deltas,backdrop.theme = "countries",
+spatialPlot(deltas, backdrop.theme = "countries",
             aspect = "iso",
             col.regions = cb,
             at = seq(-1, 1, 0.01),
