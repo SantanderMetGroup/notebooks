@@ -724,7 +724,7 @@ for (i in 1:n_regions) {
                           method = "GLM", family = Gamma(link = "log"), 
                           condition = "GE", threshold = 1,
                           prepareData.args = config.M1.M6)
-  M1cv[[i]] <- gridArithmetics(M1cv.bin,M1cv.amo,operator = "*")
+  M1cv[[i]] <- gridArithmetics(M1cv.bin, M1cv.amo, operator = "*")
 }
 ```
 
@@ -902,7 +902,7 @@ Once the prec citors are adequately configured, the final models are calibrated 
 model.M1La <- downscaleTrain(xy.M1La, method = "GLM", family = binomial(link = "logit"))
 
 # M1-L - amount
-model.M1Lb <- downscaleTrain(xy.M1Lb, method = "GLM",family = Gamma(link = "log"),
+model.M1Lb <- downscaleTrain(xy.M1Lb, method = "GLM", family = Gamma(link = "log"),
                                 condition = "GE", threshold = 1)
 
 # M6-L - analogs
@@ -919,8 +919,8 @@ First, the historical scenario is loaded, which has the UDG identifier `CMIP5_EC
 xh <- lapply(vars, function(x) {
   loadGridData(dataset = "CMIP5_EC-EARTH_r12i1p1_historical",
                var = x,
-               lonLim = c(-10,32),
-               latLim = c(36,72),
+               lonLim = c(-10, 32),
+               latLim = c(36, 72),
                years = 1979:2008) %>% interpGrid(new.coordinates = getGrid(x.eur))
 }) %>% makeMultiGrid() 
 ```
@@ -932,8 +932,8 @@ We repeat the process considering the UDG identifier for the RCP8.5 dataset:
 xf <- grid.list <- lapply(vars, function(x) {
   loadGridData(dataset = "CMIP5_EC-EARTH_r12i1p1_rcp85",
                var = x,
-               lonLim = c(-10,32),
-               latLim = c(36,72),
+               lonLim = c(-10, 32),
+               latLim = c(36, 72),
                years = 1979:2008) %>% interpGrid(new.coordinates = getGrid(x.eur))
 }) %>% makeMultiGrid() 
 ```
