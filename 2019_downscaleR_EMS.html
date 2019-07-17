@@ -11,7 +11,7 @@
 
 <meta name="author" content="J. Bedia, J. Baño-Medina, M.N. Legasa, M. Iturbide, R. Manzanas, S. Herrera, D. San Martín, A.S. Cofiño &amp; J. M Gutiérrez" />
 
-<meta name="date" content="2019-07-13" />
+<meta name="date" content="2019-07-17" />
 
 <title>Statistical downscaling with climate4R: Contribution to the VALUE Intercomparison experiment</title>
 
@@ -1618,7 +1618,7 @@ div.tocify {
 <h1 class="title toc-ignore">Statistical downscaling with <code>climate4R</code>: Contribution to the VALUE Intercomparison experiment</h1>
 <h3 class="subtitle"><em>Paper notebook - submitted to Environmental Modelling &amp; Software</em></h3>
 <h4 class="author"><em>J. Bedia, J. Baño-Medina, M.N. Legasa, M. Iturbide, R. Manzanas, S. Herrera, D. San Martín, A.S. Cofiño &amp; J. M Gutiérrez</em></h4>
-<h4 class="date"><em>2019-07-13</em></h4>
+<h4 class="date"><em>2019-07-17</em></h4>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 The R package <code>downscaleR</code> for statistical downscaling of climate information (SD) covers the most popular approaches (Model Output Statistics –including the so called “bias correction” methods– and Perfect Prognosis) and state-of-the-art techniques. It has been conceived to work primarily with daily data and can be used in the framework of both seasonal forecasting and climate change studies. Its full integration within the <a href="http://www.meteo.unican.es/climate4r">climate4R</a> framework (Iturbide <em>et al.</em> 2019) makes possible the development of end-to-end downscaling applications, from data retrieval to model building, validation and prediction, bringing to climate scientists and practitioners a unique comprehensive framework for SD model development. This notebook reproduces the results presented in the paper, showcasing the main characteristics and functioning of perfect-prog downscaling with <code>climate4R</code>, including its integration with the VALUE validation framework (Project VALUE, <a href="http://www.value-cost.eu" class="uri">http://www.value-cost.eu</a>) that allows for undertaking a comprehensive evaluation of SD methods.
@@ -2071,9 +2071,9 @@ Schematic overview of the R package downscaleR and its framing into the climate4
 <p>Predictor are loaded considering the European domain determined by the following bounding box:</p>
 <div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb38-1" data-line-number="1">lonLim &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">10</span>,<span class="dv">32</span>)</a>
 <a class="sourceLine" id="cb38-2" data-line-number="2">latLim &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">36</span>,<span class="dv">72</span>)</a></code></pre></div>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1">variables &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;psl&quot;</span>,<span class="st">&quot;tas&quot;</span>,<span class="st">&quot;ta@500&quot;</span>,<span class="st">&quot;ta700&quot;</span>,<span class="st">&quot;ta850&quot;</span>,<span class="st">&quot;hus@500&quot;</span>,<span class="st">&quot;hus@850&quot;</span>,<span class="st">&quot;z@500&quot;</span>)</a>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1">vars &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;psl&quot;</span>,<span class="st">&quot;tas&quot;</span>,<span class="st">&quot;ta@500&quot;</span>,<span class="st">&quot;ta@700&quot;</span>,<span class="st">&quot;ta@850&quot;</span>,<span class="st">&quot;hus@500&quot;</span>,<span class="st">&quot;hus@850&quot;</span>,<span class="st">&quot;z@500&quot;</span>)</a>
 <a class="sourceLine" id="cb39-2" data-line-number="2">dataset &lt;-<span class="st"> &quot;ECMWF_ERA-Interim-ESD&quot;</span></a>
-<a class="sourceLine" id="cb39-3" data-line-number="3">grid.list &lt;-<span class="st"> </span><span class="kw">lapply</span>(variables, <span class="cf">function</span>(x) {</a>
+<a class="sourceLine" id="cb39-3" data-line-number="3">grid.list &lt;-<span class="st"> </span><span class="kw">lapply</span>(vars, <span class="cf">function</span>(x) {</a>
 <a class="sourceLine" id="cb39-4" data-line-number="4">    <span class="kw">loadGridData</span>(<span class="dt">dataset =</span> dataset,</a>
 <a class="sourceLine" id="cb39-5" data-line-number="5">                 <span class="dt">var =</span> x,</a>
 <a class="sourceLine" id="cb39-6" data-line-number="6">                 <span class="dt">lonLim =</span> lonLim,</a>
@@ -2184,7 +2184,7 @@ European domain showing the regular grid of the ERA-Interim 2-deg predictors (gr
 <a class="sourceLine" id="cb46-26" data-line-number="26">                          <span class="dt">method =</span> <span class="st">&quot;GLM&quot;</span>, <span class="dt">family =</span> <span class="kw">Gamma</span>(<span class="dt">link =</span> <span class="st">&quot;log&quot;</span>), </a>
 <a class="sourceLine" id="cb46-27" data-line-number="27">                          <span class="dt">condition =</span> <span class="st">&quot;GE&quot;</span>, <span class="dt">threshold =</span> <span class="dv">1</span>,</a>
 <a class="sourceLine" id="cb46-28" data-line-number="28">                          <span class="dt">prepareData.args =</span> config.M1.M6)</a>
-<a class="sourceLine" id="cb46-29" data-line-number="29">  M1cv[[i]] &lt;-<span class="st"> </span><span class="kw">gridArithmetics</span>(M1cv.bin,M1cv.amo,<span class="dt">operator =</span> <span class="st">&quot;*&quot;</span>)</a>
+<a class="sourceLine" id="cb46-29" data-line-number="29">  M1cv[[i]] &lt;-<span class="st"> </span><span class="kw">gridArithmetics</span>(M1cv.bin, M1cv.amo, <span class="dt">operator =</span> <span class="st">&quot;*&quot;</span>)</a>
 <a class="sourceLine" id="cb46-30" data-line-number="30">}</a></code></pre></div>
 <p>The resulting model outputs, trained for the different subregions after spatial subsetting, are binded again into the same data structure:</p>
 <div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb47-1" data-line-number="1">M6cv &lt;-<span class="st"> </span><span class="kw">bindGrid</span>(M6cv, <span class="dt">dimension =</span> <span class="st">&quot;loc&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">redim</span>(<span class="dt">drop =</span> <span class="ot">TRUE</span>)</a>
@@ -2197,13 +2197,12 @@ European domain showing the regular grid of the ERA-Interim 2-deg predictors (gr
 <h2><span class="header-section-number">3.3</span> Local Methods M1-L and M6-L</h2>
 <p>The predictor sets are now constructed according to the configurations M1-L and M6-L described in <a href="#methods">Table 1</a>. Note that the code in this section is much simpler than in the <a href="#global">previous predictor configurations</a>, as no iteration over subregions is required in this case.</p>
 <p>First, the specific parameter lists are defined:</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" data-line-number="1">vars &lt;-<span class="st"> </span><span class="kw">getVarNames</span>(x.eur)</a>
-<a class="sourceLine" id="cb49-2" data-line-number="2"><span class="co"># M1-L parameter</span></a>
-<a class="sourceLine" id="cb49-3" data-line-number="3">config.M1L &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">local.predictors =</span> <span class="kw">list</span>(<span class="dt">n =</span> <span class="dv">4</span>, <span class="dt">vars =</span> vars),</a>
-<a class="sourceLine" id="cb49-4" data-line-number="4">                  <span class="dt">spatial.predictors =</span> <span class="kw">list</span>(<span class="dt">v.exp =</span> <span class="fl">.95</span>,</a>
-<a class="sourceLine" id="cb49-5" data-line-number="5">                                            <span class="dt">which.combine =</span> vars))</a>
-<a class="sourceLine" id="cb49-6" data-line-number="6"><span class="co"># M6-L parameters</span></a>
-<a class="sourceLine" id="cb49-7" data-line-number="7">config.M6L &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">local.predictors =</span> <span class="kw">list</span>(<span class="dt">n =</span> <span class="dv">25</span>, <span class="dt">vars =</span> vars))</a></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" data-line-number="1"><span class="co"># M1-L parameter</span></a>
+<a class="sourceLine" id="cb49-2" data-line-number="2">config.M1L &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">local.predictors =</span> <span class="kw">list</span>(<span class="dt">n =</span> <span class="dv">4</span>, <span class="dt">vars =</span> vars),</a>
+<a class="sourceLine" id="cb49-3" data-line-number="3">                  <span class="dt">spatial.predictors =</span> <span class="kw">list</span>(<span class="dt">v.exp =</span> <span class="fl">.95</span>,</a>
+<a class="sourceLine" id="cb49-4" data-line-number="4">                                            <span class="dt">which.combine =</span> vars))</a>
+<a class="sourceLine" id="cb49-5" data-line-number="5"><span class="co"># M6-L parameters</span></a>
+<a class="sourceLine" id="cb49-6" data-line-number="6">config.M6L &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">local.predictors =</span> <span class="kw">list</span>(<span class="dt">n =</span> <span class="dv">25</span>, <span class="dt">vars =</span> vars))</a></code></pre></div>
 <hr />
 <p><strong>NOTE</strong>: <em>The following calls the <code>downcaleCV</code> are computationally intensive due to the relative large size of the experiment. These have been run on a 15,6GiB memory computer with a processor i7-6700 CPU@3.40GHz <span class="math inline">\(\times\)</span> 8. Less than this may be not sufficient to run the cross-validation.</em></p>
 <hr />
@@ -2299,7 +2298,7 @@ Cross-validation results obtained by the 4 methods tested (M1, M1-L, M7, and M7-
 <a class="sourceLine" id="cb59-2" data-line-number="2">model.M1La &lt;-<span class="st"> </span><span class="kw">downscaleTrain</span>(xy.M1La, <span class="dt">method =</span> <span class="st">&quot;GLM&quot;</span>, <span class="dt">family =</span> <span class="kw">binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>))</a>
 <a class="sourceLine" id="cb59-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb59-4" data-line-number="4"><span class="co"># M1-L - amount</span></a>
-<a class="sourceLine" id="cb59-5" data-line-number="5">model.M1Lb &lt;-<span class="st"> </span><span class="kw">downscaleTrain</span>(xy.M1Lb, <span class="dt">method =</span> <span class="st">&quot;GLM&quot;</span>,<span class="dt">family =</span> <span class="kw">Gamma</span>(<span class="dt">link =</span> <span class="st">&quot;log&quot;</span>),</a>
+<a class="sourceLine" id="cb59-5" data-line-number="5">model.M1Lb &lt;-<span class="st"> </span><span class="kw">downscaleTrain</span>(xy.M1Lb, <span class="dt">method =</span> <span class="st">&quot;GLM&quot;</span>, <span class="dt">family =</span> <span class="kw">Gamma</span>(<span class="dt">link =</span> <span class="st">&quot;log&quot;</span>),</a>
 <a class="sourceLine" id="cb59-6" data-line-number="6">                                <span class="dt">condition =</span> <span class="st">&quot;GE&quot;</span>, <span class="dt">threshold =</span> <span class="dv">1</span>)</a>
 <a class="sourceLine" id="cb59-7" data-line-number="7"></a>
 <a class="sourceLine" id="cb59-8" data-line-number="8"><span class="co"># M6-L - analogs</span></a>
@@ -2309,21 +2308,21 @@ Cross-validation results obtained by the 4 methods tested (M1, M1-L, M7, and M7-
 <h2><span class="header-section-number">4.2</span> Model prediction</h2>
 <p>Prior to model prediction, the GCM datasets required are obtained. As previously done with ERA-Interim, the EC-EARTH simulations are obtained from the <code>climate4R</code> UDG, considering the same set of variables already used for training the models. Again, these data are recursively loaded and stored in a <em>multigrid</em> as shown in <a href="#predictor.vars">Section</a> with the ERA-Interim predictors.</p>
 <p>First, the historical scenario is loaded, which has the UDG identifier <code>CMIP5_EC-EARTH_r12i1p1_historical</code>:</p>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb60-1" data-line-number="1">xh &lt;-<span class="st"> </span><span class="kw">lapply</span>(variables, <span class="cf">function</span>(x) {</a>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb60-1" data-line-number="1">xh &lt;-<span class="st"> </span><span class="kw">lapply</span>(vars, <span class="cf">function</span>(x) {</a>
 <a class="sourceLine" id="cb60-2" data-line-number="2">  <span class="kw">loadGridData</span>(<span class="dt">dataset =</span> <span class="st">&quot;CMIP5_EC-EARTH_r12i1p1_historical&quot;</span>,</a>
 <a class="sourceLine" id="cb60-3" data-line-number="3">               <span class="dt">var =</span> x,</a>
-<a class="sourceLine" id="cb60-4" data-line-number="4">               <span class="dt">lonLim =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">10</span>,<span class="dv">32</span>),</a>
-<a class="sourceLine" id="cb60-5" data-line-number="5">               <span class="dt">latLim =</span> <span class="kw">c</span>(<span class="dv">36</span>,<span class="dv">72</span>),</a>
-<a class="sourceLine" id="cb60-6" data-line-number="6">               <span class="dt">years =</span> <span class="dv">1979</span><span class="op">:</span><span class="dv">2008</span>)</a>
-<a class="sourceLine" id="cb60-7" data-line-number="7">}) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">makeMultiGrid</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">interpGrid</span>(<span class="dt">new.coordinates =</span> <span class="kw">getGrid</span>(x.eur))</a></code></pre></div>
+<a class="sourceLine" id="cb60-4" data-line-number="4">               <span class="dt">lonLim =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">10</span>, <span class="dv">32</span>),</a>
+<a class="sourceLine" id="cb60-5" data-line-number="5">               <span class="dt">latLim =</span> <span class="kw">c</span>(<span class="dv">36</span>, <span class="dv">72</span>),</a>
+<a class="sourceLine" id="cb60-6" data-line-number="6">               <span class="dt">years =</span> <span class="dv">1979</span><span class="op">:</span><span class="dv">2008</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">interpGrid</span>(<span class="dt">new.coordinates =</span> <span class="kw">getGrid</span>(x.eur))</a>
+<a class="sourceLine" id="cb60-7" data-line-number="7">}) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">makeMultiGrid</span>() </a></code></pre></div>
 <p>We repeat the process considering the UDG identifier for the RCP8.5 dataset:</p>
-<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb61-1" data-line-number="1">xf &lt;-<span class="st"> </span>grid.list &lt;-<span class="st"> </span><span class="kw">lapply</span>(variables, <span class="cf">function</span>(x) {</a>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb61-1" data-line-number="1">xf &lt;-<span class="st"> </span>grid.list &lt;-<span class="st"> </span><span class="kw">lapply</span>(vars, <span class="cf">function</span>(x) {</a>
 <a class="sourceLine" id="cb61-2" data-line-number="2">  <span class="kw">loadGridData</span>(<span class="dt">dataset =</span> <span class="st">&quot;CMIP5_EC-EARTH_r12i1p1_rcp85&quot;</span>,</a>
 <a class="sourceLine" id="cb61-3" data-line-number="3">               <span class="dt">var =</span> x,</a>
-<a class="sourceLine" id="cb61-4" data-line-number="4">               <span class="dt">lonLim =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">10</span>,<span class="dv">32</span>),</a>
-<a class="sourceLine" id="cb61-5" data-line-number="5">               <span class="dt">latLim =</span> <span class="kw">c</span>(<span class="dv">36</span>,<span class="dv">72</span>),</a>
-<a class="sourceLine" id="cb61-6" data-line-number="6">               <span class="dt">years =</span> <span class="dv">1979</span><span class="op">:</span><span class="dv">2008</span>)</a>
-<a class="sourceLine" id="cb61-7" data-line-number="7">}) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">makeMultiGrid</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">interpGrid</span>(<span class="dt">new.coordinates =</span> <span class="kw">getGrid</span>(x.eur))</a></code></pre></div>
+<a class="sourceLine" id="cb61-4" data-line-number="4">               <span class="dt">lonLim =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">10</span>, <span class="dv">32</span>),</a>
+<a class="sourceLine" id="cb61-5" data-line-number="5">               <span class="dt">latLim =</span> <span class="kw">c</span>(<span class="dv">36</span>, <span class="dv">72</span>),</a>
+<a class="sourceLine" id="cb61-6" data-line-number="6">               <span class="dt">years =</span> <span class="dv">1979</span><span class="op">:</span><span class="dv">2008</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">interpGrid</span>(<span class="dt">new.coordinates =</span> <span class="kw">getGrid</span>(x.eur))</a>
+<a class="sourceLine" id="cb61-7" data-line-number="7">}) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">makeMultiGrid</span>() </a></code></pre></div>
 <p>The data for prediction (both the historical scenario <code>xh</code> and the RCP8.5 <code>xf</code>) need to be rescaled, according to the mean and variance of the predictor set used for model calibration:</p>
 <div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb62-1" data-line-number="1">xf &lt;-<span class="st"> </span><span class="kw">scaleGrid</span>(xf, <span class="dt">base =</span> xh, <span class="dt">ref =</span> x.eur,</a>
 <a class="sourceLine" id="cb62-2" data-line-number="2">                <span class="dt">type =</span> <span class="st">&quot;center&quot;</span>, <span class="dt">spatial.frame =</span> <span class="st">&quot;gridbox&quot;</span>, </a>
@@ -2421,13 +2420,13 @@ Cross-validation results obtained by the 4 methods tested (M1, M1-L, M7, and M7-
 ## 
 ## other attached packages:
 ## [1] loadeR_1.4.14         downscaleR_3.1.0      transformeR_1.5.1    
-## [4] visualizeR_1.4.0      VALUE_2.1.0           climate4R.value_0.0.1
+## [4] visualizeR_1.4.0      VALUE_2.1.1           climate4R.value_0.0.1
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] maps_3.3.0              foreach_1.4.4          
 ##  [3] SpecsVerification_0.5-2 dotCall64_1.0-0        
 ##  [5] sm_2.2-5.6              assertthat_0.2.1       
-##  [7] highr_0.7               sp_1.3-1               
+##  [7] sp_1.3-1                highr_0.7              
 ##  [9] latticeExtra_0.6-28     grDevices_3.6.1        
 ## [11] deepnet_0.2             yaml_2.2.0             
 ## [13] pillar_1.4.2            lattice_0.20-38        
