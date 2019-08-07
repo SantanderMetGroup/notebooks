@@ -1,19 +1,17 @@
 ---
-title: "Statistical downscaling with `climate4R`: Contribution to the VALUE Intercomparison experiment"
-subtitle: "Paper notebook - submitted to Environmental Modelling & Software"
+title: "Statistical downscaling with package `downscaleR`: Contribution to the VALUE intercomparison experiment"
+subtitle: "Paper notebook - submitted to Geoscientific Model Development Discussions"
 author: "J. Bedia, J. Baño-Medina, M.N. Legasa, M. Iturbide, R. Manzanas, S. Herrera, D. San Martín, A.S. Cofiño & J. M Gutiérrez"
-date: "`r Sys.Date()`"
-encoding: "UTF8"
-urlcolor: blue
+date: '`r Sys.Date()`'
 output:
   pdf_document:
-    highlight: pygments  
-    toc: yes
     fig_caption: yes
-    pandoc_args: [
-      "--number-sections",
-      "--number-offset=0"]
+    highlight: pygments
     latex_engine: pdflatex
+    pandoc_args:
+    - --number-sections
+    - --number-offset=0
+    toc: yes
   html_document:
     fig_caption: yes
     highlight: pygments
@@ -21,8 +19,10 @@ output:
     theme: readable
     toc: yes
     toc_float: yes
+encoding: UTF8
 documentclass: article
 abstract: The R package `downscaleR` for statistical downscaling of climate information (SD) covers the most popular approaches (Model Output Statistics –including the so called "bias correction" methods– and Perfect Prognosis) and state-of-the-art techniques. It has been conceived to work primarily with daily data and can be used in the framework of both seasonal forecasting and climate change studies. Its full integration within the [climate4R](http://www.meteo.unican.es/climate4r) framework (Iturbide _et al._ 2019) makes possible the development of end-to-end downscaling applications, from data retrieval to model building, validation and prediction, bringing to climate scientists and practitioners a unique comprehensive framework for SD model development. This notebook reproduces the results presented in the paper, showcasing the main characteristics and functioning of perfect-prog downscaling with `climate4R`, including its integration with the VALUE validation framework (Project VALUE, http://www.value-cost.eu) that allows for undertaking a comprehensive evaluation of SD methods.
+urlcolor: blue
 ---
 
 \fontfamily{cmr}
@@ -30,7 +30,8 @@ abstract: The R package `downscaleR` for statistical downscaling of climate info
 \selectfont
 
 
-```{r setup, include=FALSE}
+
+```{r include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
                       highlight = TRUE,
                       message = FALSE,
@@ -98,6 +99,16 @@ inval_latex_img <- function(path) {
   invalid_ext <- c('svg', 'SVG', 'GIF', 'gif')
   return(tools::file_ext(path) %in% invalid_ext)
 }
+
+```
+
+```{r, eval=TRUE, echo = FALSE, cache = FALSE}
+# library("rticles")
+# library("rmarkdown")
+# rmarkdown::draft(file = "2019_downscaleR_GMD.Rmd",
+#                  template = "copernicus_article",
+#                  package = "rticles", edit = FALSE)
+# rmarkdown::render(input = "2019_downscaleR_GMD/2019_downscaleR_GMD.Rmd")
 ```
 
 # Introduction{#intro}
@@ -517,7 +528,8 @@ This function iterates over the methods in order to calculate R01 for each of th
 
 ```{r}
 lapply(1:length(methods), function(i) {
-  valueMeasure(y, x = get(methods[i]), measure.code = "ratio", index.code = "R01")$Measure
+  valueMeasure(y, x = get(methods[i]), 
+               measure.code = "ratio", index.code = "R01")$Measure
 })
 ```
 
@@ -724,7 +736,7 @@ for (i in 1:n_regions) {
                           method = "GLM", family = Gamma(link = "log"), 
                           condition = "GE", threshold = 1,
                           prepareData.args = config.M1.M6)
-  M1cv[[i]] <- gridArithmetics(M1cv.bin, M1cv.amo, operator = "*")
+  M1cv[[i]] <- gridArithmetics(M1cv.bin,M1cv.amo,operator = "*")
 }
 ```
 
@@ -750,7 +762,7 @@ First, the specific parameter lists are defined:
 
 ```{r}
 # M1-L parameter
-config.M1L <- list(local.predictors = list(n = 4, vars = vars),
+config.M1L <- list(local.predictors = list(n = 1, vars = vars),
                   spatial.predictors = list(v.exp = .95,
                                             which.combine = vars))
 # M6-L parameters
@@ -882,7 +894,8 @@ The final configuration of predictors for M1-L (stored in the `config.M1L` list)
 ```{r}
 # Predictor configuration
 spatialList <- list(v.exp = .95, which.combine = vars)
-localList.M1L <- list(n = 4, vars = vars)
+# spatialList <- NULL
+localList.M1L <- list(n = 1, vars = vars)
 localList.M6L <- list(n = 25, vars = vars)
 # Prepare predictors for M1-L
 xy.M1La <- prepareData(x_scale, y_bin,
@@ -899,11 +912,13 @@ Once the prec citors are adequately configured, the final models are calibrated 
 
 ```{r}
 # M1-L - occurrence
-model.M1La <- downscaleTrain(xy.M1La, method = "GLM", family = binomial(link = "logit"))
+model.M1La <- downscaleTrain(xy.M1La, method = "GLM", 
+                             family = binomial(link = "logit"))
 
 # M1-L - amount
-model.M1Lb <- downscaleTrain(xy.M1Lb, method = "GLM", family = Gamma(link = "log"),
-                                condition = "GE", threshold = 1)
+model.M1Lb <- downscaleTrain(xy.M1Lb, method = "GLM",
+                             family = Gamma(link = "log"),
+                             condition = "GE", threshold = 1)
 
 # M6-L - analogs
 model.M6L <- downscaleTrain(xy.M6L, method = "analogs",n.analogs = 1)
@@ -919,9 +934,9 @@ First, the historical scenario is loaded, which has the UDG identifier `CMIP5_EC
 xh <- lapply(vars, function(x) {
   loadGridData(dataset = "CMIP5_EC-EARTH_r12i1p1_historical",
                var = x,
-               lonLim = c(-10, 32),
-               latLim = c(36, 72),
-               years = 1979:2008) %>% interpGrid(new.coordinates = getGrid(x.eur))
+               lonLim = c(-10,32),
+               latLim = c(36,72),
+               years = 1979:2005) %>% interpGrid(new.coordinates = getGrid(x.eur))
 }) %>% makeMultiGrid() 
 ```
 
@@ -932,9 +947,9 @@ We repeat the process considering the UDG identifier for the RCP8.5 dataset:
 xf <- grid.list <- lapply(vars, function(x) {
   loadGridData(dataset = "CMIP5_EC-EARTH_r12i1p1_rcp85",
                var = x,
-               lonLim = c(-10, 32),
-               latLim = c(36, 72),
-               years = 1979:2008) %>% interpGrid(new.coordinates = getGrid(x.eur))
+               lonLim = c(-10,32),
+               latLim = c(36,72),
+               years = 2071:2100) %>% interpGrid(new.coordinates = getGrid(x.eur))
 }) %>% makeMultiGrid() 
 ```
 
@@ -1012,22 +1027,44 @@ load("futu.M6L.rda")
 load("hist.M1L.rda")
 load("hist.M6L.rda")
 ```
+
+We project the change in the frequency of precipitation (i.e., R01) and in the mean wet days (SDII) computed with the function `valueIndex` of the package `climate4R.value`. This is done for the two configurations described: M1L and M6L.
+
 ```{r, eval = TRUE}
-delta.glm <- gridArithmetics(climatology(futu.M1L), climatology(hist.M1L), operator = "-")
-delta.an <- gridArithmetics(climatology(futu.M6L), climatology(hist.M6L), operator = "-")
+dR01.M1L <- gridArithmetics(valueIndex(futu.M1L,index.code = "R01")$Index,
+                            valueIndex(hist.M1L,index.code = "R01")$Index,
+                            operator = "-") %>% 
+  gridArithmetics(valueIndex(hist.M1L,index.code = "R01")$Index,
+                  operator = "/")
+
+dSDII.M1L <- gridArithmetics(valueIndex(futu.M1L,index.code = "SDII")$Index,
+                             valueIndex(hist.M1L,index.code = "SDII")$Index,
+                             operator = "-") %>%
+  gridArithmetics(valueIndex(hist.M1L,index.code = "SDII")$Index,
+                  operator = "/")
+dR01.M6L <- gridArithmetics(valueIndex(futu.M6L,index.code = "R01")$Index,
+                            valueIndex(hist.M6L,index.code = "R01")$Index,
+                            operator = "-") %>% 
+  gridArithmetics(valueIndex(hist.M6L,index.code = "R01")$Index,
+                  operator = "/")
+dSDII.M6L <- gridArithmetics(valueIndex(futu.M6L,index.code = "SDII")$Index,
+                             valueIndex(hist.M6L,index.code = "SDII")$Index,
+                             operator = "-") %>% 
+  gridArithmetics(valueIndex(hist.M6L,index.code = "SDII")$Index,
+                  operator = "/")
 ```
 
-The GLM and Analog projected anomalies are grouped in a multigrid in order to jointly display them in the map. 
+The GLM and Analog projected anomalies are grouped in a multigrid in order to jointly display them in the map.
 
 ```{r, eval = TRUE}
-deltas <- makeMultiGrid(delta.glm, delta.an)
+deltas <- makeMultiGrid(dR01.M6L, dSDII.M6L,
+                        dR01.M1L, dSDII.M1L)
 ```
 
 The figure is produced with `spatialPlot`. Here, we use the color palettes provided by the R package `RColorBrewer`, and several tuning parameters are passed to spatialPlot to produce the final paper figure:
 
-
 ```{r, fig.width = 9, eval = TRUE}
-colsindex <- rev(RColorBrewer::brewer.pal(n = 9, "RdBu"))
+colsindex <- RColorBrewer::brewer.pal(n = 9, "RdBu")
 cb <- colorRampPalette(colsindex)(100)
 spatialPlot(deltas, backdrop.theme = "countries",
             aspect = "iso",
@@ -1035,8 +1072,9 @@ spatialPlot(deltas, backdrop.theme = "countries",
             at = seq(-1, 1, 0.01),
             set.min = -1, set.max = 1,
             colorkey = TRUE,
-            main = "Downscaled future (2071-2100) precipitation anomalies (mm/day)",
-            strip = lattice::strip.custom(factor.levels = c("M1-L (GLM)","M6-L (Analog)"))
+            strip = lattice::strip.custom(factor.levels = 
+                                            c("M6-L (R01)","M6-L (SDII)",
+                                              "M1-L (R01)","M1-L (SDII)"))
 )
 ```
 
