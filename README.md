@@ -22,7 +22,7 @@ An overview of the notebooks so far included and the corresponding published art
 
 
 
-An overview of the notebooks so far for courses and workshops:
+An overview of the notebooks used in courses and workshops:
 
 | notebook  | Institution | Course/Workshop | Session  	
 |---|---|---|---
