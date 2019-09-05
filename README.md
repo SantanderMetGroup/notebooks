@@ -24,9 +24,9 @@ An overview of the notebooks so far included and the corresponding published art
 
 An overview of the notebooks so far for courses and workshops:
 
-| notebook  | Course/Workshop | Session  	
-|---|---|---
-| 2019_climate4R_SU.8.1 | SU.8.1 Adaptecca scenarios: Use of regional climate change scenarios for impact and adaptation studies | Tools for accessing and processing climate data: Case study with R
+| notebook  | Institution | Course/Workshop | Session  	
+|---|---|---|---
+| 2019_climate4R_SU.8.1 | University of Cantabria | [SU.8.1 Adaptecca scenarios: Use of regional climate change scenarios for impact and adaptation studies](https://web.unican.es/cursosdeveranoyextension/cursos-de-verano/curso?c=2861) | Tools for accessing and processing climate data: Case study with R
 
 ***
 **NOTE**: The `climate4R` packages are being actively developed. Thus, the notebooks often indicate the installation of the package versions that were used at the moment of compiling them. Alternatively, there is usually a Session Information section at the end of each notebook with details on the package versions used to compile. As a result, example code may fail if run with different versions. If you experience problems while running some of the examples, **please ensure that you are using the appropriate package versions**. If the problem persists, just let us know by dropping a ticket in the Issues section of this repo. Thank you!
