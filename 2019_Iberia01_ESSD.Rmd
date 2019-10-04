@@ -4,13 +4,6 @@ subtitle: "Paper notebook - submitted to Earth System Science Data (ESSD)"
 author: "S. Herrera, R.M. Cardoso, P.M.M. Soares, F. Espírito-Santo & J. M Gutiérrez"
 date: '`r Sys.Date()`'
 output:
-  html_document:
-    fig_caption: yes
-    highlight: pygments
-    number_sections: yes
-    theme: readable
-    toc: yes
-    toc_float: yes
   pdf_document:
     fig_caption: yes
     highlight: pygments
@@ -19,9 +12,16 @@ output:
     - --number-sections
     - --number-offset=0
     toc: yes
+  html_document:
+    fig_caption: yes
+    highlight: pygments
+    number_sections: yes
+    theme: readable
+    toc: yes
+    toc_float: yes
 encoding: UTF8
 documentclass: article
-abstract: Iberia01 is a gridded dataset of daily precipitation and mean, maximum and minimum daily temperatures over the Iberian Peninsula covering the period 1971-2015 and reaching a spatial resolution of 0.1º. This dataset has been developed based on previous works done for Spain and Portugal. The present annex includes the code, in R, to reproduce some of the figures shown in the paper Herrera et al. 2019 submitted to Earth System Science Data (ESSD).
+abstract: Iberia01 is a gridded dataset of daily precipitation and mean, maximum and minimum daily temperatures over the Iberian Peninsula covering the period 1971-2015 at a 0.1º spatial resolution. This dataset has been developed based on previous works done for Spain (Spain02) and Portugal (PT02). The present annex includes the code, in R, to reproduce some of the figures shown in the paper Herrera et al. 2019, Earth System Science Data (ESSD). DOI -  http://dx.doi.org/10.20350/digitalCSIC/8641
 urlcolor: blue
 ---
 
@@ -47,96 +47,80 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # R PACKAGE REQUIREMENTS 
 
-The following R packages (R Core Team 2017) are required to follow the examples. Note the last **Session Information Section** of this manual, where the specific package versions used to build these examples are indicated.
+Iberia01 is provided in NetCDF format and, therefore, can be accessed using a number of packages and libraries. In this example, we build on the climate4R (https://github.com/SantanderMetGroup/climate4R) R framework for Climate Data Access and Post-processing which allows to easily read the data, compute indices and validation metrics and plot the results. To ensure reproducibility, it is recommend to install the same versions of the packages that produced this document, even though in most cases more recent versions exist (see the last Session Information Section).
 
-## Installing the adequate version
+## Installing climate4R
 
-All the *climate4R* packages are currently under active development. Thus, to ensure the reproducibility of these examples, it is recommend to install the same versions of the packages that produced this document, even though in most cases more recent versions exist. The package versions used are indicated in the Session Information Section at the end of this document. The function `install_github` from package `devtools` (Wickham and Chang 2016) is recommended to install a particular package version from the GitHub repositories. For, instance, to install `transformeR` v0.0.14, it suffices with pointing to the specific version tag after the `@` symbol. 
+The *climate4R* R framework can be installed using conda or docker. Individual packages can be also installed from the GitHub repositories using the function `install_github` from package `devtools`. For, instance, to install `transformeR` v0.0.14, it suffices with pointing to the specific version tag after the `@` symbol. 
 
-Thus, in order to install the proper versions of the packages of the *climate4R* bundle needed to run these examples: 
+Thus, in order to install the proper versions of the packages of the *climate4R* bundle needed to run these examples:
   
 ```{r,eval=FALSE}
-devtools::install_github(c("SantanderMetGroup/transformeR@v0.0.14",
-                           "SantanderMetGroup/loadeR@v1.0.9")
+devtools::install_github(c("SantanderMetGroup/transformeR", "SantanderMetGroup/convertR",
+                           "SantanderMetGroup/loadeR", "SantanderMetGroup/visualizeR"))
 ```
 
-```{r, message=FALSE, eval=TRUE}
+```{r, eval=TRUE, echo = FALSE, message=FALSE}
 rm(list = ls())
 options(java.parameters = "-Xmx8000m")
+library(transformeR)
+library(convertR)
 library(loadeR)
+library(visualizeR)
+```
+
+```{r, message=FALSE, eval=FALSE}
+rm(list = ls())
+options(java.parameters = "-Xmx8000m")
+library(loadeR, lib.loc = "~/R/x86_64-pc-linux-gnu-library/3.5/")
 ```
 
 ## R package for data loading
 
-The R package `loadeR` will perform the data loading task, including authentication against the Santander User Data Gateway (UDG) server (see the [installation instructions](http://meteo.unican.es/ecoms-udg/RPackage/versions)) and enabling the access to any remote dataset via OPeNDAP (more details in the [loadeR's wiki page](https://github.com/SantanderMetGroup/loadeR/wiki)), as well as creating and accesing datasets locally.
-                     
-Prior to data access through the Santander User Data Gateway, authentication is required to access the UDG. The authentication is performed in one step:
+The R package `loadeR` will perform the data loading task, including authentication against the Santander User Data Gateway (UDG) server (see the [loadeR wiki](https://github.com/SantanderMetGroup/loadeR/wiki)) and enabling the access to any remote dataset via OPeNDAP, as well as creating and accesing datasets locally.
+
+Prior to data access through the Santander Climate Data Service (via the User Data Gateway), authentication is required (see instructions for registration, [https://github.com/SantanderMetGroup/loadeR/wiki/Loading-data-from-the-User-Data-Gateway-(UDG)](https://github.com/SantanderMetGroup/loadeR/wiki/Loading-data-from-the-User-Data-Gateway-(UDG))). Once a user/password have been obtained, the authentication is performed in one step:
 
 ```{r,eval=FALSE}
-loginUDG(username = "jDoe", password = "*****")
+loginUDG(username = "---", password = "---") # Replace "---" by the personal user/password
+```
+
+```{r,eval=TRUE, echo = FALSE, message=FALSE}
+loginUDG(username = "SixtoHerrera", password = "carlosv") # Replace "---" by the personal user/password
 ```
 
 ## R package for data post-processing and plotting
 
-In addition, the R package `transformeR` (Bedia and Iturbide 2017) enables climate data transformation (plotting, aggregation, subsetting, PCA/EOF analysis ...). Further details on its capabilities and installation instructions are available in the [wiki page](https://github.com/SantanderMetGroup/transformeR/wiki). It is seamlessly integrated with the data structures provided by `loadeR.ECOMS`.
+In addition, the R package `transformeR` enables climate data transformation (plotting, aggregation, subsetting, PCA/EOF analysis ...). Further details on its capabilities and installation instructions are available in the [wiki page](https://github.com/SantanderMetGroup/transformeR/wiki). Moreover, the package `visualizeR` provides different ploting functions.
 
-
-```{r, message=FALSE, eval=TRUE}
-library(transformeR)
-library(convertR)
-library(visualizeR)
-```
-
-## Additional packages
-
-### Functions for Extreme Value Distributions (evd):
-
-In order to illustrate the analysis included in Herrera et al. 2019 the [evd](https://cran.r-project.org/web/packages/evd/index.html) package should be installed to obtain the Generalized Extreme Value (GEV) distribution.
-
-```{r, eval=FALSE}
-install.packages("evd")
-```
-
-```{r, message=FALSE, eval=TRUE}
-library(evd)
-```
-
-In order to extend the analysis shown in this document to other indices, the reader can consider the following R packages to easily estimate other climate and drought indices.
-
-### R package for Climate Indices calculation: 
-
-`climate4R.indices` is the package to compute several indices within the climate4R framework, therefore is seamlessly integrated with the climate4R data structures, and provides support for parallel computing.
-
-```{r, eval=FALSE}
-devtools::install_github(c("SantanderMetGroup/transformeR", 
-                           "SantanderMetGroup/climate4R.indices"))
-```
-
-```{r, message=FALSE, eval=TRUE}
-library(climate4R.indices)
-indexShow()
-?indexGrid   # see the examples 
+```{r, message=FALSE, eval=FALSE}
+library(transformeR, lib.loc = "~/R/x86_64-pc-linux-gnu-library/3.5/")
+library(convertR, lib.loc = "~/R/x86_64-pc-linux-gnu-library/3.5/")
+library(visualizeR, lib.loc = "~/R/x86_64-pc-linux-gnu-library/3.5/")
 ```
 
 ### Colour Palettes:
 
 The package `RColorBrewer` is used to replicate the spectral color palette used in the paper in the correlation maps. Next, the palette `veri.colors` is defined, that will be used in the verification maps:
 
-```{r, message=FALSE, eval=TRUE}
+```{r, message=FALSE, eval=FALSE}
+library(RColorBrewer, lib.loc = "~/R/x86_64-pc-linux-gnu-library/3.5/")
+cols <- brewer.pal(n = 11, name = "Spectral")
+veri.colors <- colorRampPalette(rev(cols))
+```
+
+```{r, message=FALSE, eval=TRUE, echo = FALSE}
 library(RColorBrewer)
 cols <- brewer.pal(n = 11, name = "Spectral")
 veri.colors <- colorRampPalette(rev(cols))
 ```
 
 # Daily Precipitation Climatology:
-
 First, we obtain the daily precipitation climatology and the differences between both datasets, Iberia01 and E-OBS v17.0. To this aim, the dataset and geographical domain should be defined:
 
 ```{r,echo=TRUE, message=FALSE, eval=TRUE}
-eobsNcML <- "http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/
-            rr_0.25deg_reg_v17.0.nc"
-ib01NcML <- "http://meteo.unican.es/tds5/dodsC/Iberia01/
-            Iberia01_v1.0_010reg_aa_3d.ncml"
+eobsNcML <- "http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/rr_0.25deg_reg_v17.0.nc"
+ib01NcML <- "http://meteo.unican.es/tds5/dodsC/Iberia01/Iberia01_v1.0_010reg_aa_3d.ncml"
 ## Defining the temporal and geographical domain:
 latLim <- c(34, 44)
 lonLim <- c(-10, 6)
@@ -144,7 +128,6 @@ years <- c(1971:2010)
 ```
 
 ## E-OBS v17.0:
-
 First, we obtain the climatology for the E-OBS v17.0 dataset. To this aim we should know the variables included in the dataset
 
 ```{r, echo=TRUE, eval=FALSE, message=FALSE}
@@ -169,10 +152,18 @@ spatialPlot(pr.eobs, backdrop.theme = "countries", at = seq(-0.5,6,0.5),
 
 Now, we consider the Iberia01 dataset:
 
+```{r,eval=TRUE, echo = FALSE, message=FALSE}
+loginUDG(username = "SixtoHerrera", password = "carlosv") # Replace "---" by the personal user/password
+```
+
 ```{r,echo=TRUE, eval=FALSE, message=FALSE}
 di <- dataInventory(ib01NcML)
 ## Variables:
 names(di)
+```
+
+```{r,eval=TRUE, echo = FALSE, message=FALSE}
+loginUDG(username = "SixtoHerrera", password = "carlosv") # Replace "---" by the personal user/password
 ```
 
 ```{r,echo=TRUE, eval=TRUE, message=FALSE}
@@ -220,11 +211,9 @@ rm(list=c("pr.Ib01", "pr.eobs", "bias", "relBias"))
 
 Once the climatologies for some precipitation indices have been obtained we show the climatology of mean temperature. Note that, in this case, the datasets should be redefined, at least for E-OBS v17.0:
 
-```{r,echo=TRUE, message=FALSE}
-eobsNcML <- "http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/
-             tg_0.25deg_reg_v17.0.nc"
-ib01NcML <- "http://meteo.unican.es/tds5/dodsC/Iberia01/
-             Iberia01_v1.0_010reg_aa_3d.ncml"
+```{r,echo=TRUE, message=FALSE, eval = TRUE}
+eobsNcML <- "http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/tg_0.25deg_reg_v17.0.nc"
+ib01NcML <- "http://meteo.unican.es/tds5/dodsC/Iberia01/Iberia01_v1.0_010reg_aa_3d.ncml"
 ## Defining the temporal and geographical domain:
 latLim <- c(34, 44)
 lonLim <- c(-10, 6)
@@ -253,8 +242,10 @@ spatialPlot(tg.eobs, backdrop.theme = "countries", at = seq(0,25,1),
 ```
 
 ## Iberia01:
-
 Now, we consider the Iberia01 dataset:
+```{r,eval=TRUE, echo = FALSE, message=FALSE}
+loginUDG(username = "SixtoHerrera", password = "carlosv") # Replace "---" by the personal user/password
+```
 
 ```{r,echo=TRUE, eval=FALSE, message=FALSE}
 di <- dataInventory(ib01NcML)
@@ -262,7 +253,17 @@ di <- dataInventory(ib01NcML)
 names(di)
 ```
 
-```{r,echo=TRUE, eval=TRUE, message=FALSE}
+```{r,echo=FALSE, eval=TRUE, message=FALSE}
+loginUDG(username = "SixtoHerrera", password = "carlosv") # Replace "---" by the personal user/password
+tg.Ib01 <- loadGridData(ib01NcML, "tas", dictionary = FALSE, lonLim = lonLim, latLim = latLim, 
+                           season = c(1:12), years = years, time = "DD", aggr.d = "mean", aggr.m = "mean")
+tg.Ib01 <- climatology(tg.Ib01, clim.fun = list(FUN = "mean", na.rm = TRUE))
+spatialPlot(tg.Ib01, backdrop.theme = "countries", at = seq(0,25,1), 
+            col.regions = veri.colors(51), colorkey = list(space = "bottom"), 
+            main = "Mean Temperature (1971-2010)")
+```
+
+```{r,echo=TRUE, eval=FALSE, message=FALSE}
 tg.Ib01 <- loadGridData(ib01NcML, "tas", dictionary = FALSE, lonLim = lonLim, latLim = latLim, 
                            season = c(1:12), years = years, time = "DD", aggr.d = "mean")
 tg.Ib01 <- climatology(tg.Ib01, clim.fun = list(FUN = "mean", na.rm = TRUE))
@@ -291,13 +292,29 @@ spatialPlot(bias, backdrop.theme = "countries", at = seq(-5,5,0.5),
 rm(list=c("tg.Ib01", "tg.eobs", "bias"))
 ```
 
-# REFERENCES
+# Additional packages
 
-* Bedia, J. and Iturbide, M., 2017. `transformeR`: Climate data post-processing. R package version 0.0.9. https://github.com/SantanderMetGroup/transformeR/wiki.
-* Frías M.D., Iturbide M., Manzanas R., Bedia J., Fernández J., Herrera S., Cofiño A.S., Gutiérrez J.M., 2018. An R package to visualize and communicate uncertainty in seasonal climate prediction, Environmental Modelling & Software, 99, 101-110, https://doi.org/10.1016/j.envsoft.2017.09.008.
-* Gutiérrez J. M., Bedia J., Iturbide M., Herrera S., Manzanas R., Baño-Medina J., Frías M. D., San-Martín D., Fernández J., Cofiño A. S., 2018. Climate Research Reproducibility with the Climate4R R-based framework; 8 th International Workshop on Climate Information. Available on-line here: http://www.meteo.unican.es/work/climate4r/climate4r_CI2018.pdf
-* R Core Team, 2017. R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-* Wickham, H., Hester, J. and Chang, W., 2018. `devtools`: Tools to Make Developing R Packages Easier. R package version 2.0.1. https://CRAN.R-project.org/package=devtools
+## Functions for Extreme Value Distributions (evd):
+
+In order to illustrate the analysis included in Herrera et al. 2019 the [evd](https://cran.r-project.org/web/packages/evd/index.html) package should be installed to obtain the Generalized Extreme Value (GEV) distribution.
+
+```{r, message=FALSE, eval=TRUE}
+install.packages("evd")
+library(evd, lib.loc = "~/R/x86_64-pc-linux-gnu-library/3.5/")
+```
+
+In order to extend the analysis shown in this document to other indices, the reader can consider the following R packages to easily estimate other climate and drought indices.
+
+## R package for Climate Indices calculation: 
+
+`climate4R.indices` is the package to compute several indices within the climate4R framework, therefore is seamlessly integrated with the climate4R data structures, and provides support for parallel computing.
+
+```{r, message=FALSE, eval=TRUE}
+devtools::install_github(c("SantanderMetGroup/climate4R.indices"))
+library(climate4R.indices, lib.loc = "~/R/x86_64-pc-linux-gnu-library/3.5/")
+indexShow()
+?indexGrid   # see the examples 
+```
 
 -- 
 
