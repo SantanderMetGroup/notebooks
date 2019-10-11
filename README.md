@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/126175546.svg)](https://zenodo.org/badge/latestdoi/126175546)
 # Santander MetGroup Paper Notebooks
 
 
