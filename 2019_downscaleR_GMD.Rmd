@@ -1,9 +1,17 @@
 ---
-title: "Statistical downscaling with package `downscaleR`: Contribution to the VALUE intercomparison experiment"
-subtitle: "Paper notebook - submitted to Geoscientific Model Development Discussions"
-author: "J. Bedia, J. Baño-Medina, M.N. Legasa, M. Iturbide, R. Manzanas, S. Herrera, D. San Martín, A.S. Cofiño & J. M Gutiérrez"
+title: 'Statistical downscaling with `climate4R`: Contribution to the VALUE Intercomparison
+  experiment'
+author: J. Bedia, J. Baño-Medina, M.N. Legasa, M. Iturbide, R. Manzanas, S. Herrera,
+  D. San Martín, A.S. Cofiño & J. M Gutiérrez
 date: '`r Sys.Date()`'
 output:
+  html_document:
+    fig_caption: yes
+    highlight: pygments
+    number_sections: yes
+    theme: readable
+    toc: yes
+    toc_float: yes
   pdf_document:
     fig_caption: yes
     highlight: pygments
@@ -12,16 +20,23 @@ output:
     - --number-sections
     - --number-offset=0
     toc: yes
-  html_document:
-    fig_caption: yes
-    highlight: pygments
-    number_sections: yes
-    theme: readable
-    toc: yes
-    toc_float: yes
 encoding: UTF8
 documentclass: article
-abstract: The R package `downscaleR` for statistical downscaling of climate information (SD) covers the most popular approaches (Model Output Statistics –including the so called "bias correction" methods– and Perfect Prognosis) and state-of-the-art techniques. It has been conceived to work primarily with daily data and can be used in the framework of both seasonal forecasting and climate change studies. Its full integration within the [climate4R](http://www.meteo.unican.es/climate4r) framework (Iturbide _et al._ 2019) makes possible the development of end-to-end downscaling applications, from data retrieval to model building, validation and prediction, bringing to climate scientists and practitioners a unique comprehensive framework for SD model development. This notebook reproduces the results presented in the paper, showcasing the main characteristics and functioning of perfect-prog downscaling with `climate4R`, including its integration with the VALUE validation framework (Project VALUE, http://www.value-cost.eu) that allows for undertaking a comprehensive evaluation of SD methods.
+subtitle: Paper notebook - submitted to Environmental Modelling & Software
+abstract: The R package `downscaleR` for statistical downscaling of climate information
+  (SD) covers the most popular approaches (Model Output Statistics –including the
+  so called "bias correction" methods– and Perfect Prognosis) and state-of-the-art
+  techniques. It has been conceived to work primarily with daily data and can be used
+  in the framework of both seasonal forecasting and climate change studies. Its full
+  (Iturbide _et al._ 2019) makes possible the development of end-to-end downscaling
+  applications, from data retrieval to model building, validation and prediction,
+  bringing to climate scientists and practitioners a unique comprehensive framework
+  for SD model development. This notebook reproduces the results presented in the
+  paper, showcasing the main characteristics and functioning of perfect-prog downscaling
+  with `climate4R`, including its integration with the VALUE validation framework
+  a comprehensive
+  evaluation of SD methods. integration within the [climate4R](http://www.meteo.unican.es/climate4r)
+  framework (Project VALUE, http://www.value-cost.eu) that allows for undertaking
 urlcolor: blue
 ---
 
@@ -37,11 +52,11 @@ knitr::opts_chunk$set(echo = TRUE,
                       message = FALSE,
                       fig.align = "center",
                       tidy = FALSE,
-                      eval = FALSE,
+                      eval = TRUE,
                       fig.width = 7,
                       cache = TRUE,
-                      cache.path = "./cache/",
-                      fig.path = "./cache/figs")
+                      cache.path = "./cache_html/",
+                      fig.path = "./cache_html/figs")
 
 # Thanks to this:
 # https://www.r-bloggers.com/wrapper-of-knitrinclude_graphics-to-handle-urls-pdf-outputs/
@@ -124,6 +139,15 @@ include_graphics2(path = "https://raw.githubusercontent.com/SantanderMetGroup/cl
 </br>
 
 
+
+```{r creds, echo=FALSE, eval=TRUE, warning=FALSE, message = FALSE, cache = FALSE}
+source("/home/jorge/creds")
+path = "/oceano/gmeteo/WORK/bmedina/2019_downscaleR/"
+setwd('/oceano/gmeteo/WORK/bmedina/2019_downscaleR/')
+```
+
+
+
 ## Package overview
 
 The typical perfect-prog downscaling phases are indicated in the figure above by the grey arrows: 
@@ -163,7 +187,7 @@ The `climate4R` packages used in this paper are next loaded:
 require(loadeR)
 require(transformeR)
 require(downscaleR)
-require(visualizeR)
+require(visualizeR) #
 require(climate4R.value)
 ```
 
@@ -173,13 +197,14 @@ Additional packages will be used for convenience. For instance, the package `mag
 require(magrittr)
 ```
 
+
 ```{r,echo=FALSE,eval=TRUE}
-load("iberia.Rdata")
+load("./Data/iberia.Rdata")
 ```
 
 In order to keep Experiment 1 and 2 self-contained, tha data are independently read in both cases, even though the dataset used for this experiment is a subset of the pan-European datasets used for [Experiment 2](#exp2). Therefore, in this section we first delimit the Iberian Peninsula subregion from the PRUDENCE regions used in VALUE (these are indicated in the paper, with further details). The vector layer delimiting these regions is a built-in dataset in package `visualizeR`, and therefore extracting the bounding box for Iberia is straightforward:
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 data("PRUDENCEregions", package = "visualizeR")
 names(PRUDENCEregions)
 bb <- PRUDENCEregions["IP"]@bbox
@@ -248,7 +273,7 @@ Table: Summary of predictor configurations tested. Local predictors always corre
 
 The fold list specifies the years composing each of the 5 subsamples for 5-fold cross-validation, following the [VALUE experimental setup](http://www.value-cost.eu/validation):
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 folds <- list(1979:1984, 1985:1990, 1991:1996, 1997:2002, 2003:2008)
 ```
 
@@ -294,9 +319,9 @@ M1cv.cont <- downscaleCV(x = x, y = y, method = "GLM",
                          condition = "GE", threshold = 1,
                          folds = folds,
                          prepareData.args = list(global.vars = NULL,
-                                                 local.predictors = NULL,
-                                                 spatial.predictors = spatial.pars.M1,
-                                                 combined.only = TRUE))
+                                              local.predictors = NULL,
+                                              spatial.predictors = spatial.pars.M1,
+                                              combined.only = TRUE))
 ```
 
 The continuous and binary predictions are now multiplied, so the precipitation frequency is adjusted and the final precipitation predictions are obtained:
@@ -346,7 +371,8 @@ M2cv.bin <- downscaleCV(x = x, y = y_bin, method = "GLM",
                      prepareData.args = list(global.vars = NULL,
                                           local.predictors = NULL,
                                           spatial.predictors = spatial.pars.M2,
-                                          combined.only = FALSE)) %>% subsetGrid(var = "bin")
+                                          combined.only = FALSE)) %>%
+  subsetGrid(var = "bin")
 ```
 
 Similarly, the continuous GLM model M2 is cross-validated:
@@ -357,9 +383,9 @@ M2cv.cont <- downscaleCV(x = x, y = y, method = "GLM",
                          condition = "GE", threshold = 1,
                          folds = folds,
                          prepareData.args = list(global.vars = NULL,
-                                                 local.predictors = NULL,
-                                                 spatial.predictors = spatial.pars.M2,
-                                                 combined.only = FALSE))
+                                              local.predictors = NULL,
+                                              spatial.predictors = spatial.pars.M2,
+                                              combined.only = FALSE))
 ```
 
 The final predictions are obtained as in M1:
@@ -384,7 +410,8 @@ M3cv.bin <- downscaleCV(x = x, y = y_bin, method = "GLM",
                   scaleGrid.args = scaling.pars,
                   prepareData.args = list(global.vars = NULL,
                                       local.predictors = local.pars.M3,
-                                      spatial.predictors = NULL)) %>% subsetGrid(var = "bin")
+                                      spatial.predictors = NULL)) %>% 
+  subsetGrid(var = "bin")
 # Continuous precip amount model:
 M3cv.cont <- downscaleCV(x = x, y = y, method = "GLM",
                          family = Gamma(link = "log"),
@@ -414,7 +441,8 @@ M4cv.bin <- downscaleCV(x = x, y = y_bin, method = "GLM",
                   scaleGrid.args = scaling.pars,
                   prepareData.args = list(global.vars = NULL,
                                       local.predictors = local.pars.M4,
-                                      spatial.predictors = NULL)) %>% subsetGrid(var = "bin")
+                                      spatial.predictors = NULL)) %>% 
+  subsetGrid(var = "bin")
 # Continuous precip amount model:                      
 M4cv.cont <- downscaleCV(x = x, y = y, method = "GLM",
                          family = Gamma(link = "log"),
@@ -503,8 +531,10 @@ Table: Summary of the subset of VALUE validation indices and measures used in th
 
 The user can also obtain an overview of the different indices and measures of the VALUE framework via the functions `show.indices()` and `show.measures()` available in the package `VALUE`. All the VALUE indices and measures are calculated by calling to the workhorse functions `valueIndex` and `valueMeasure`. For instance, the ratio is used as a measure to intercompare the predicted/observed frequency of wet days (greater of equal to 1 mm precip, VALUE code R01). To this aim, R01 is computed for both the predicted and observed time series, and then the ratio predicted/observed) is calculated. In the following example, the R01 ratio is calculated for method M1, considering the cross-validated model predictions:
 
-```{r,eval=TRUE}
-index.ratio <- valueMeasure(y, x = M6cv, measure.code = "ratio", index.code = "R01")$Measure
+```{r}
+index.ratio <- valueMeasure(y, x = M6cv, 
+                            measure.code = "ratio", 
+                            index.code = "R01")$Measure
 ```
 
 A quick spatial plot helps to identify at which locations the frequency of wet days is under/over (red/blue) estimated by method M6: 
@@ -526,7 +556,7 @@ In order to automate this task, the objects containing the cross validation resu
 
 This function iterates over the methods in order to calculate R01 for each of them:
 
-```{r}
+```{r,eval = FALSE}
 lapply(1:length(methods), function(i) {
   valueMeasure(y, x = get(methods[i]), 
                measure.code = "ratio", index.code = "R01")$Measure
@@ -573,7 +603,7 @@ val.results[["bwplot.custom"]] <- list(layout = c(3, 3),
                                        ylim = c(0, 2),
                                        as.table = TRUE,
                                        scales = list(cex = 1.2,
-                                           x = list(labels = paste0("M", 1:7))))
+                                       x = list(labels = paste0("M", 1:7))))
 # Colorkey intervals (so colorkey is centered in 1)
 val.results[["color.cuts"]] <- seq(0.30,1.85,.15)
 ```
@@ -613,7 +643,7 @@ grid.list <- lapply(vars, function(x) {
 x.eur <- makeMultiGrid(grid.list)
 ```
   
-```{r}
+```{r, eval = FALSE}
 value <- file.path(find.package("VALUE"), "example_datasets", "VALUE_ECA_86_v2.zip")
 y <- loadStationData(dataset = value,
                      var = "precip",
@@ -626,7 +656,7 @@ y_bin <- binaryGrid(y, condition = "GE", threshold = 1)
 The following code prepares a map displaying the predictor set reference grid and the predictand locations:
 
 ```{r,eval=TRUE,echo=FALSE}
-load("europe.Rdata")
+load("./Data/europe.Rdata")
 ```
 
  
@@ -637,9 +667,11 @@ grid_clim <- climatology(subsetDimension(x.eur, dimension = "var", indices = 1))
 spatialPlot(grid_clim,at = seq(-2, 2, 0.1), set.min = 4, set.max = 8, 
             backdrop.theme = "countries", 
             main = "Predictand locations and predictor grid",
-            sp.layout = list(list(sp::SpatialPoints(coords.x), first = FALSE, 
+            sp.layout = list(list(sp::SpatialPoints(coords.x), 
+                                  first = FALSE, 
                                   col = "grey80", pch = 3),
-                             list(sp::SpatialPoints(getCoordinates(y)), first = FALSE, 
+                             list(sp::SpatialPoints(getCoordinates(y)), 
+                                  first = FALSE, 
                                   col = "red", pch = 22)
             ),
             colorkey = FALSE)
@@ -721,22 +753,23 @@ for (i in 1:n_regions) {
                            folds = folds,
                            scaleGrid.args = list(type = "standardize"),
                            method = "analogs", n.analogs = 1,
-                           prepareData.args = config.M1.M6)
+                           prepareData.args = list(spatial.predictors = config.M1.M6))
   # M1
   y1reg_bin <- binaryGrid(y1reg, condition = "GE", threshold = 1)
   M1cv.bin <- downscaleCV(x1reg, y1reg_bin,
                           folds = folds,
                           scaleGrid.args = list(type = "standardize"),
                           method = "GLM", family = binomial(link = "logit"),
-                          prepareData.args = config.M1.M6) %>% subsetGrid(var = "bin")
+                          prepareData.args = list(spatial.predictors = config.M1.M6)) %>% 
+    subsetGrid(var = "bin")
   
   M1cv.amo <- downscaleCV(x1reg, y1reg,
                           folds = folds,
                           scaleGrid.args = list(type = "standardize"),
                           method = "GLM", family = Gamma(link = "log"), 
                           condition = "GE", threshold = 1,
-                          prepareData.args = config.M1.M6)
-  M1cv[[i]] <- gridArithmetics(M1cv.bin,M1cv.amo,operator = "*")
+                          prepareData.args = list(spatial.predictors = config.M1.M6))
+  M1cv[[i]] <- gridArithmetics(M1cv.bin, M1cv.amo, operator = "*")
 }
 ```
 
@@ -815,10 +848,17 @@ M6Lcv <- downscaleCV(x.eur, y,
 As done previously in [Section 2.4](#val.ip), the validation is undertaken using the `valueMeasure` wrapper to the VALUE set of validation indices and measures. The root mean square error (RMSE) and correlation between the observed and predicted daily time series of precipitation are considered. In addition, we compare the variance of the observations and the predictions by calculating their respective variance indices, and then using the ratio predicted/observed as measure.
 
 ```{r,eval=TRUE,echo=FALSE}
-load("M1cv.rda")
-load("M6cv.rda")
-load("M1Lcv.rda")
-load("M6Lcv.rda")
+save(M1cv, file ="./Data/M1cv.rda")
+save(M6cv, file ="./Data/M6cv.rda")
+save(M1Lcv, file ="./Data/M1Lcv.rda")
+save(M6Lcv, file ="./Data/M6Lcv.rda")
+```
+
+```{r,eval=TRUE,echo=FALSE}
+load("./Data/M1cv.rda")
+load("./Data/M6cv.rda")
+load("./Data/M1Lcv.rda")
+load("./Data/M6Lcv.rda")
 ```
 
 
@@ -844,7 +884,8 @@ corr.list <- lapply(methods, function(m) {
 names(corr.list) <- methods
 # Variance ratio
 var.list <- lapply(methods, function(m) {
-    valueMeasure(y = y, x = get(m), index.code = "Var", measure.code = "ratio")$Measure    
+    valueMeasure(y = y, x = get(m), index.code = "Var", 
+                 measure.code = "ratio")$Measure    
 })
 names(var.list) <- methods
 ```
@@ -853,7 +894,7 @@ Some tuning parameters are indicated in order to obtain an adequate plot display
 
 
 ```{r, echo=FALSE, eval=TRUE}
-load("eur_validation.Rdata")
+#load("./Data/eur_validation.Rdata")
 ```
 
 ```{r, eval=TRUE}
@@ -880,18 +921,18 @@ The validation results indicate that the local predictor counterparts of the ori
 In this section, the calibrated SD models are used to downscale GCM future climate projections from the CMIP5 EC-EARTH model (r12-i1-p1). `downscalePredict` is the workhorse for downscaling once the SD model has been calibrated with `downscaleTrain`.
 
 ## Final SD model calibration
-
+  
 After cross-validation, the results suggest that the use of local predictors yields similar results than the original VALUE configurations M1 and M6, but providing a more straightforward implementation that does not require iteration over subregions. For this reason, the final models considering the local GLM (M1-L) and local analog (M6-L) implementations are trained for their application to climate change projections.
 
 Prior to model training, the predictor set is standardized:
 
 ```{r}
-x_scale <- scaleGrid(x.eur, type = "standardize")
+x_scale <- scaleGrid(x.eur, type = "standardize") #
 ```
 
 The final configuration of predictors for M1-L (stored in the `config.M1L` list) and M6-L methods (`config.M6L`) is directly passed to the function `prepareData`, whose output contains all the information required to undertake model training via the `downscaleTrain` function:
 
-```{r}
+```{r, eval = FALSE}
 # Predictor configuration
 spatialList <- list(v.exp = .95, which.combine = vars)
 # spatialList <- NULL
@@ -910,7 +951,7 @@ xy.M6L <- prepareData(x_scale, y, local.predictors = localList.M6L)
 
 Once the prec citors are adequately configured, the final models are calibrated with `downscaleTrain`:
 
-```{r}
+```{r, eval = FALSE}
 # M1-L - occurrence
 model.M1La <- downscaleTrain(xy.M1La, method = "GLM", 
                              family = binomial(link = "logit"))
@@ -919,7 +960,6 @@ model.M1La <- downscaleTrain(xy.M1La, method = "GLM",
 model.M1Lb <- downscaleTrain(xy.M1Lb, method = "GLM",
                              family = Gamma(link = "log"),
                              condition = "GE", threshold = 1)
-
 # M6-L - analogs
 model.M6L <- downscaleTrain(xy.M6L, method = "analogs",n.analogs = 1)
 ```
@@ -969,7 +1009,7 @@ xh <- scaleGrid(xh, base = xh, ref = x.eur,
 
 Downscaling predictions are generated with the `downscalePredict` function. As for the model calibration step, data need to be pre-processed. This is done with the function `prepareNewData`, that receives as input the output of `prepareData` in order to undertake all the necessary checks for dimensional consistency and eventual PC related transformations:
 
-```{r}
+```{r, eval = FALSE}
 # Historical dataset
 h.M1La <- prepareNewData(xh, xy.M1La)
 h.M1Lb <- prepareNewData(xh, xy.M1Lb)
@@ -982,13 +1022,13 @@ f.M6L <- prepareNewData(xf, xy.M6L)
 
 Once the data prediction data is prepared, the `downscalePredict` function undertakes prediction. It receives two inputs: i) `newdata` (i.e., the data given for prediction) and ii) `model`, containing the calibrated model:
 
-```{r}
+```{r, eval = FALSE}
 hist.M1La <- downscalePredict(newdata = h.M1La, model = model.M1La)
 ```
 
 As previously seen, in the logistic regression model the raw prediction is a probability. In order to convert it to binary the function `binaryGrid` of `transformeR` is used. To this aim, the probability threshold for precipitation is given by the observed climatology (argument `ref.obs`) and applied to the probabilistic prediction (argument `ref.pred`):
 
-```{r}
+```{r, eval = FALSE}
 hist.M1La.bin <- binaryGrid(hist.M1La,
                             ref.obs = y_bin,
                             ref.pred = model.M1La$pred)
@@ -997,7 +1037,7 @@ hist.M1La.bin <- binaryGrid(hist.M1La,
 
 The same process is next used for the remaining models and for RCP8.5 data. For GLM:
 
-```{r}
+```{r, eval = FALSE}
 # GLM
 hist.M1Lb <- downscalePredict(h.M1Lb, model.M1Lb)
 hist.M1L <- gridArithmetics(hist.M1La.bin, hist.M1Lb, operator = "*")
@@ -1011,7 +1051,7 @@ futu.M1L <- gridArithmetics(futu.M1La.bin, futu.M1Lb,operator = "*")
 
 And for the analogs method:
 
-```{r}
+```{r, eval = FALSE}
 # ANALOG
 hist.M6L <- downscalePredict(h.M6L,model.M6L)
 futu.M6L <- downscalePredict(f.M6L,model.M6L)
@@ -1022,62 +1062,238 @@ futu.M6L <- downscalePredict(f.M6L,model.M6L)
 The downscaled projected anomalies are next calculated as the difference netween the model predictions for RCP8.5 (2071-2100) minus the predictions for the historical scenario (1979-2008). The function `climatology` is used to compute the climatological mean (mm/day) for each period, and then the function `gridArithmetics` is used to calculate the arithmetic difference between both. 
 
 ```{r,eval=TRUE,echo=FALSE}
-load("futu.M1L.rda")
-load("futu.M6L.rda")
-load("hist.M1L.rda")
-load("hist.M6L.rda")
+load("./Data/futu.M1L.rda")
+load("./Data/futu.M6L.rda")
+load("./Data/hist.M1L.rda")
+load("./Data/hist.M6L.rda")
 ```
 
-We project the change in the frequency of precipitation (i.e., R01) and in the mean wet days (SDII) computed with the function `valueIndex` of the package `climate4R.value`. This is done for the two configurations described: M1L and M6L.
+We project the change in the frequency of precipitation (i.e., R01) and in the mean wet days (SDII) computed with the function `valueMeasure` of the package `climate4R.value`. This is done for the two configurations described: M1L and M6L.
 
 ```{r, eval = TRUE}
-dR01.M1L <- gridArithmetics(valueIndex(futu.M1L,index.code = "R01")$Index,
-                            valueIndex(hist.M1L,index.code = "R01")$Index,
-                            operator = "-") %>% 
-  gridArithmetics(valueIndex(hist.M1L,index.code = "R01")$Index,
-                  operator = "/")
-
-dSDII.M1L <- gridArithmetics(valueIndex(futu.M1L,index.code = "SDII")$Index,
-                             valueIndex(hist.M1L,index.code = "SDII")$Index,
-                             operator = "-") %>%
-  gridArithmetics(valueIndex(hist.M1L,index.code = "SDII")$Index,
-                  operator = "/")
-dR01.M6L <- gridArithmetics(valueIndex(futu.M6L,index.code = "R01")$Index,
-                            valueIndex(hist.M6L,index.code = "R01")$Index,
-                            operator = "-") %>% 
-  gridArithmetics(valueIndex(hist.M6L,index.code = "R01")$Index,
-                  operator = "/")
-dSDII.M6L <- gridArithmetics(valueIndex(futu.M6L,index.code = "SDII")$Index,
-                             valueIndex(hist.M6L,index.code = "SDII")$Index,
-                             operator = "-") %>% 
-  gridArithmetics(valueIndex(hist.M6L,index.code = "SDII")$Index,
-                  operator = "/")
+dR01.M1L <- valueMeasure(hist.M1L,futu.M1L,measure.code = "biasRel",
+                         index.code = "R01")$Measure
+dSDII.M1L <- valueMeasure(hist.M1L,futu.M1L,measure.code = "biasRel",
+                          index.code = "SDII")$Measure
+dR01.M6L <- valueMeasure(hist.M6L,futu.M6L,measure.code = "biasRel",
+                         index.code = "R01")$Measure
+dSDII.M6L <- valueMeasure(hist.M6L,futu.M6L,measure.code = "biasRel",
+                          index.code = "SDII")$Measure
 ```
 
-The GLM and Analog projected anomalies are grouped in a multigrid in order to jointly display them in the map.
+
+We can compare the computed deltas for the M1L and M6L configurations with those done in VALUE: M1 and M6. Therefore, we repeat the training and predictions steps for the latter models and loop over the 8 VALUE subregions.
+```{r, eval = FALSE}
+hist.M1 <- futu.M1 <- hist.M6 <- futu.M6 <- list()
+for (i in 1:n_regions) {
+  y1reg <- subsetDimension(y, dimension = "loc", indices = ind[[i]])
+  y1reg_bin <- binaryGrid(y1reg,condition = "GE", threshold = 1)
+  x1reg <- subsetGrid(x.eur, lonLim = areas[n[i]]@bbox[1,],
+                      latLim = areas[n[i]]@bbox[2,])
+  x_scale1 <- scaleGrid(x1reg, type = "standardize")
+  xy.M1a <- prepareData(x_scale1, y1reg_bin,
+                         spatial.predictors = config.M1.M6)
+  xy.M1b <- xy.M6 <- prepareData(x_scale1, y1reg,
+                         spatial.predictors = config.M1.M6)
+  
+  model.M1a <- downscaleTrain(xy.M1a, method = "GLM", 
+                              family = binomial(link = "logit"))
+  model.M1b <- downscaleTrain(xy.M1b, method = "GLM", 
+                              family = Gamma(link = "log"),
+                               condition = "GE", threshold = 1)
+  model.M6 <- downscaleTrain(xy.M6, method = "analogs",n.analogs = 1)
+  
+  xh_scale1 <- subsetGrid(xh, lonLim = areas[n[i]]@bbox[1,],
+                         latLim = areas[n[i]]@bbox[2,]) 
+  xf_scale1 <- subsetGrid(xf, lonLim = areas[n[i]]@bbox[1,],
+                         latLim = areas[n[i]]@bbox[2,])
+  h.M1a <- prepareNewData(xh_scale1, xy.M1a)
+  h.M1b <- prepareNewData(xh_scale1, xy.M1b)
+  h.M6 <- prepareNewData(xh_scale1, xy.M6)
+  f.M1a <- prepareNewData(xf_scale1, xy.M1a)
+  f.M1b <- prepareNewData(xf_scale1, xy.M1b)
+  f.M6 <- prepareNewData(xf_scale1, xy.M6)
+  
+  hist.M1a <- downscalePredict(newdata = h.M1a, model = model.M1a)
+  hist.M1a.bin <- binaryGrid(hist.M1a,
+                              ref.obs = y1reg_bin,
+                              ref.pred = model.M1a$pred)
+  hist.M1b <- downscalePredict(h.M1b, model.M1b)
+  hist.M1[[i]] <- gridArithmetics(hist.M1a.bin, hist.M1b, operator = "*")
+  futu.M1a <- downscalePredict(f.M1a, model.M1a)
+  futu.M1a.bin <- binaryGrid(futu.M1a,
+                              ref.obs = y1reg_bin,
+                              ref.pred = model.M1a$pred)
+  futu.M1b <- downscalePredict(f.M1b, model.M1b)
+  futu.M1[[i]] <- gridArithmetics(futu.M1a.bin, futu.M1b,operator = "*")
+  hist.M6[[i]] <- downscalePredict(h.M6,model.M6)
+  futu.M6[[i]] <- downscalePredict(f.M6,model.M6)
+}
+
+hist.M1 <- bindGrid(hist.M1, dimension = "loc") %>% redim(drop = TRUE) %>% 
+  matchStations(y)
+hist.M6 <- bindGrid(hist.M6, dimension = "loc") %>% redim(drop = TRUE) %>% 
+  matchStations(y)
+futu.M1 <- bindGrid(futu.M1, dimension = "loc") %>% redim(drop = TRUE) %>% 
+  matchStations(y)
+futu.M6 <- bindGrid(futu.M6, dimension = "loc") %>% redim(drop = TRUE) %>% 
+  matchStations(y)
+```
+```{r, eval = FALSE, echo = FALSE}
+save(hist.M1,hist.M6,futu.M1,futu.M6,
+     file = "./Data/deltasVALUE.rda")
+```
+```{r, eval = TRUE, echo = FALSE}
+load("./Data/deltasVALUE.rda")
+```
+
+Finally we compute the deltas in the R01 and SDII indices for the M1 and M6 configurations.
+```{r, eval = TRUE}
+dR01.M1 <- valueMeasure(hist.M1,futu.M1,measure.code = "biasRel",
+                        index.code = "R01")$Measure
+dSDII.M1 <- valueMeasure(hist.M1,futu.M1,measure.code = "biasRel",
+                         index.code = "SDII")$Measure
+dR01.M6 <- valueMeasure(hist.M6,futu.M6,measure.code = "biasRel",
+                        index.code = "R01")$Measure
+dSDII.M6 <- valueMeasure(hist.M6,futu.M6,measure.code = "biasRel",
+                         index.code = "SDII")$Measure
+```
+
+The GLM and Analog projected anomalies for M1L, M6L, M1 and M6 configurations are grouped in a multigrid in order to jointly display them in the map.
 
 ```{r, eval = TRUE}
-deltas <- makeMultiGrid(dR01.M6L, dSDII.M6L,
-                        dR01.M1L, dSDII.M1L)
+deltas <- makeMultiGrid(dR01.M1L,dR01.M1,dR01.M6L,dR01.M6,
+                        dSDII.M1L,dSDII.M1,dSDII.M6L,dSDII.M6)
 ```
 
 The figure is produced with `spatialPlot`. Here, we use the color palettes provided by the R package `RColorBrewer`, and several tuning parameters are passed to spatialPlot to produce the final paper figure:
 
 ```{r, fig.width = 9, eval = TRUE}
-colsindex <- RColorBrewer::brewer.pal(n = 9, "RdBu")
-cb <- colorRampPalette(colsindex)(100)
-spatialPlot(deltas, backdrop.theme = "countries",
+cb <- RColorBrewer::brewer.pal(n = 5, "RdBu")
+cb[3] <- "#808080"
+spatialPlot(deltas, backdrop.theme = "coastline",
             aspect = "iso",
             col.regions = cb,
-            at = seq(-1, 1, 0.01),
-            set.min = -1, set.max = 1,
+            cuts = seq(-0.5, 0.5, 0.2),
+            set.min = -0.5, set.max = 0.5,
             colorkey = TRUE,
-            strip = lattice::strip.custom(factor.levels = 
-                                            c("M6-L (R01)","M6-L (SDII)",
-                                              "M1-L (R01)","M1-L (SDII)"))
+            layout = c(4,2),
+            as.table = TRUE,
+            cex = 0.6,
+            strip = lattice::strip.custom(factor.levels = c("M1-L (R01)","M1 (R01)",
+                                                            "M6-L (R01)","M6 (R01)",
+                                                            "M1-L (SDII)","M1 (SDII)",
+                                                            "M6-L (SDII)","M6 (SDII)"))
 )
 ```
 
+## Perfect-prognosis hypothesis
+In this section we estimate the distribution similarity between the renalysis and GCM predictors. First, ERA-Interim VALUE and EC-EARTH historical datasets are temporally intersected, to set their common period 1979-2005
+```{r, echo = FALSE,eval = TRUE}
+
+load("./Data/x.eur.rda")
+load("./Data/xh.rda")
+```
+```{r, eval = TRUE}
+x.eur2 <- intersectGrid(x.eur, xh)
+
+```
+For estimating the distributional similarity, we use the two-sample Kolmogorov–Smirnov statistic, implemented in the VALUE package.
+The analyses is performed on the daily time-series at each grid-box, after nearest-neighbour remapping of the EC-EARTH grid onto the reference 2-degree regular grid used in VALUE.
+ 
+```{r, eval = TRUE}
+vars <- getVarNames(xh)
+x.eur2$Variable$varName <- vars
+```
+The following function is a wrapper of the VALUE package functions to compute the KS-test and the corrected p-value. Furthermore,
+it performs the necessary steps to draw the ks score maps and add a stippling to those grid point significant
+at a 95% confidence interval using the visualizeR functions to that aim. As optional arguments, the variables
+to be used in the analysis, the target season and the type of data transformation (none, centering or standardization) can be indicated,
+that are internally accomplished using the corresponding function of package transformeR (subsetGrid and scaleGrid).
+```{r, eval = TRUE}
+ksPanelPlot <- function(x.grid, y.grid, season,
+                        vars = getVarNames(x.grid),
+                        anom.type = c("none", "center", "standardize")) {
+    x <- subsetGrid(x.grid, season = season)
+    y <- subsetGrid(y.grid, season = season)
+    if (anom.type != "none") {
+        x <- scaleGrid(x, type = anom.type)
+        y <- scaleGrid(y, type = anom.type)
+    }
+    ks.score.list <- pval.list <- rep(list(bquote()), length(vars))
+    for (i in 1:length(vars)) {
+        x.var <- subsetGrid(x, var = vars[i])
+        y.var <- subsetGrid(y, var = vars[i])
+        ks.score.list[[i]] <- valueMeasure(y = y.var,
+                                           x = x.var,
+                                           measure.code = "ts.ks")$"Measure"
+        pval.list[[i]] <- valueMeasure(y = y.var,
+                                       x = x.var,
+                                       measure.code = "ts.ks.pval")$"Measure" %>% climatology() %>% map.stippling(condition = "LT",
+                                                                                                                  pch = 4,
+                                                                                                                  cex = 1.5,
+                                                                                                                  col = "red",
+                                                                                                                  which = i)
+    }
+    ksmap <- do.call("makeMultiGrid", ks.score.list)
+    return(list("map" = ksmap, "stippling" = pval.list))
+}
+```
+
+In the following, different maps are generated displaying the KS score analysis for JJA and DJF, considering all the predictor variables and the three data transformation choices: raw, centered and standardized. In the figures below, the color darkening from pale to deep blue indicate increasing values of the KS-statistic. The significant grid cells (i.e., those for which the distributions of ERA-Interim and EC-EARTH significantly differ), are highlighted with red crosses. In general terms, the distributions of GCM and reanalysis differ significantly when considering the raw time series, independently of the target season (Figs 1 and 2), thus violating the assumptions of the perfect prog hypothesis regarding the good representativity by the GCM of the reanalysis predictor fields. Centering the data (i.e, zero mean time series) greatly alleviates this problem for most variables, excepting specific humidity at 500 mb (hus500), and near-surface temperature (tas), persisting some local problems over the British Isles for ta850 and hus850 (the latter only in summer, but not in JJA). This is depicted in Figs. 3 (DJF) and 4 (JJA). Finally, data standardization improves the distributional similarity, attaining an optimal representativity of all the GCM predictors but hus500 in the summer in southern in the Mediterranean. These results are consistent with the findings in Brands et al. 2013, pointing to specific humidity in 500 mb as a less reliable predictor.
+```{r, eval = TRUE, warning=FALSE}
+# Raw
+raw.djf <- ksPanelPlot(x.grid = xh, y.grid = x.eur2,
+                       season = c(12,1,2), anom.type = "none")
+
+spatialPlot(raw.djf$map, color.theme = "BuPu",
+            backdrop.theme = "coastline",
+            sp.layout = raw.djf$stippling,
+            names.attr = vars, main = "2-sample KS test - Raw series - DJF") %>% print()
+
+raw.jja <- ksPanelPlot(x.grid = xh, y.grid = x.eur2,
+                       season = 6:8, anom.type = "none")
+
+spatialPlot(raw.jja$map, color.theme = "BuPu",
+            backdrop.theme = "coastline",
+            sp.layout = raw.jja$stippling,
+            names.attr = vars, main = "2-sample KS test - Raw series - JJA")
+
+# Centered anomalies
+
+centered.djf <- ksPanelPlot(x.grid = xh, y.grid = x.eur2,
+                            season = c(12,1,2), anom.type = "center")
+
+spatialPlot(centered.djf$map, color.theme = "BuPu",
+            backdrop.theme = "coastline",
+            sp.layout = centered.djf$stippling,
+            names.attr = vars, main = "2-sample KS test - Centered anom - DJF")
+
+centered.jja <- ksPanelPlot(x.grid = xh, y.grid = x.eur2,
+                            season = 6:8, anom.type = "center")
+
+spatialPlot(centered.jja$map, color.theme = "BuPu",
+            backdrop.theme = "coastline",
+            sp.layout = centered.jja$stippling,
+            names.attr = vars, main = "2-sample KS test - Centered anom - JJA")
+
+# Standardized anomalies
+std.djf <- ksPanelPlot(x.grid = xh, y.grid = x.eur2,
+                       season = c(12,1,2), anom.type = "standardize")
+
+spatialPlot(std.djf$map, color.theme = "BuPu",
+            backdrop.theme = "coastline",
+            sp.layout = std.djf$stippling,
+            names.attr = vars, main = "2-sample KS test - Standardized anom - DJF")
+
+std.jja <- ksPanelPlot(x.grid = xh, y.grid = x.eur2,
+                       season = 6:8, anom.type = "standardize")
+
+spatialPlot(std.jja$map, color.theme = "BuPu",
+            backdrop.theme = "coastline",
+            sp.layout = std.jja$stippling,
+            names.attr = vars, main = "2-sample KS test - Standardized anom - JJA") 
+```
 
 # References
 
