@@ -20,7 +20,7 @@ An overview of the notebooks so far included and the corresponding published art
 | 2018_drought4R_NCOMMS | Exacerbated fires in Mediterranean Europe due to anthropogenic warming projected with non-stationary climate-fire models | Nature Communications | https://doi.org/10.1038/s41467-018-06358-z
 | 2018_metaclip_EMS* | METACLIP: A semantic provenance framework for climate products | Environmental Modelling and Software | https://doi.org/10.1016/j.envsoft.2019.07.005
 | 2019_downscaleR_GMD* | Statistical downscaling with downscaleR: Contribution to the VALUE intercomparison experiment | Geoscientific Model Development Discuss. | https://doi.org/10.5194/gmd-2019-224
-| 2019_Iberia01_ESSD* | Iberia01: A new gridded dataset of daily precipitation and temperatures over Iberia | Earth System Science Data Discuss. | https://doi.org/10.5194/essd-2019-95 
+| 2019_Iberia01_ESSD* | Iberia01: A new gridded dataset of daily precipitation and temperatures over Iberia | Earth System Science Data Discuss. | https://doi.org/10.5194/essd-11-1947-2019 
 
 
 An overview of the notebooks used in courses and workshops:
