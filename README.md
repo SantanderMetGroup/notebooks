@@ -21,7 +21,7 @@ An overview of the notebooks so far included and the corresponding published art
 | 2018_metaclip_EMS* | METACLIP: A semantic provenance framework for climate products | Environmental Modelling and Software | https://doi.org/10.1016/j.envsoft.2019.07.005
 | 2019_downscaleR_GMD* | Statistical downscaling with downscaleR: Contribution to the VALUE intercomparison experiment | Geoscientific Model Development Discuss. | https://doi.org/10.5194/gmd-2019-224
 | 2019_Iberia01_ESSD* | Iberia01: A new gridded dataset of daily precipitation and temperatures over Iberia | Earth System Science Data Discuss. | https://doi.org/10.5194/essd-11-1947-2019 
-| 2019_BNWeatherGen_WRR | Multisite Weather Generators using Bayesian Networks: An illustrative case study for precipitation occurrence | Water Resources Research. | 
+| 2019_BNWeatherGen_WRR | Multisite Weather Generators using Bayesian Networks: An illustrative case study for precipitation occurrence | Water Resources Research. | Builds on climate4R for data access: https://github.com/MNLR/BNWeatherGen
 
 An overview of the notebooks used in courses and workshops:
 
