@@ -19,9 +19,10 @@ An overview of the notebooks so far included and the corresponding published art
 | 2018_climate4R_example | The R-based climate4R open framework for reproducible climate data access and post-processing | Environmental Modelling and Software | https://doi.org/10.1016/j.envsoft.2018.09.009
 | 2018_drought4R_NCOMMS | Exacerbated fires in Mediterranean Europe due to anthropogenic warming projected with non-stationary climate-fire models | Nature Communications | https://doi.org/10.1038/s41467-018-06358-z
 | 2018_metaclip_EMS* | METACLIP: A semantic provenance framework for climate products | Environmental Modelling and Software | https://doi.org/10.1016/j.envsoft.2019.07.005
-| 2019_downscaleR_GMD* | Statistical downscaling with downscaleR: Contribution to the VALUE intercomparison experiment | Geoscientific Model Development Discuss. | https://doi.org/10.5194/gmd-2019-224
 | 2019_Iberia01_ESSD* | Iberia01: A new gridded dataset of daily precipitation and temperatures over Iberia | Earth System Science Data Discuss. | https://doi.org/10.5194/essd-11-1947-2019 
 | 2019_BNWeatherGen_WRR | Multisite Weather Generators using Bayesian Networks: An illustrative case study for precipitation occurrence | Water Resources Research. | https://doi.org/10.1029/2019WR026416
+| 2019_downscaleR_GMD* | Statistical downscaling with downscaleR: Contribution to the VALUE intercomparison experiment | Geoscientific Model Development | https://doi.org/10.5194/gmd-13-1711-2020
+| 2020_Lamb_ClimDyn* | Improved atmospheric circulation over Europe by the new generation of CMIP6 Earth System Models | Climate Dynamics | *submitted*
 
 An overview of the notebooks used in courses and workshops:
 
