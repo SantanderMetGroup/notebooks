@@ -23,7 +23,7 @@ An overview of the notebooks so far included and the corresponding published art
 | 2019_BNWeatherGen_WRR | Multisite Weather Generators using Bayesian Networks: An illustrative case study for precipitation occurrence | Water Resources Research. | https://doi.org/10.1029/2019WR026416
 | 2019_downscaleR_GMD* | Statistical downscaling with downscaleR: Contribution to the VALUE intercomparison experiment | Geoscientific Model Development | https://doi.org/10.5194/gmd-13-1711-2020
 | 2020_Lamb_ClimDyn* | Improved atmospheric circulation over Europe by the new generation of CMIP6 Earth System Models | Climate Dynamics | *submitted*
-| 2022_GMD_CORDEX_grand* | The worldwide C3S CORDEX grand ensemble: A major contribution to assess regional climate change in the IPCC AR6 Atlas | Geoscientific Model Development | *submitted*
+| 2022_BAMS_CORDEX_grand* | The worldwide C3S CORDEX grand ensemble: A major contribution to assess regional climate change in the IPCC AR6 Atlas | BAMS | *submitted*
 
 An overview of the notebooks used in courses and workshops:
 
