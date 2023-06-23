@@ -1,6 +1,6 @@
 adaptiveCalibration <- function(obs, sim, clustering, methods,
                                   index, custom_function = NULL,
-                                  weights = NULL, 
+                                  weights = rep(1/length(index), length(index)), 
                                   scaling.type = "multiplicative",
                                   window = NULL, theta = .95){
   
@@ -42,16 +42,14 @@ adaptiveCalibration <- function(obs, sim, clustering, methods,
     if (n.folds <= 1) {
       n.folds <- 2
     }
-    
+
     index.obs <- c()
-    index.sim <- c()
     
     for (i in c(1:length(index))) {
       
       index.obs <- c(index.obs,
                      valueIndex(aux.obs, index.code = index[i])$Index$Data)
-      index.sim <- c(index.sim, 
-                     valueIndex(aux.sim, index.code = index[i])$Index$Data)
+
       
     }
     
@@ -133,95 +131,18 @@ adaptiveCalibration <- function(obs, sim, clustering, methods,
       cal$Dates$start <- as.POSIXct(cal$Dates$start,tz = "GMT")
       cal$Dates$end <- as.POSIXct(cal$Dates$end,tz = "GMT")
       
-      #computation of climate indices from VALUE
-      
-      index.cal <- c()
-      for (i in c(1:length(index))) {
-        
-        index.cal <- c(index.cal, valueIndex(grid = cal, 
-                                             index.code = index[i])$Index$Data)
-        
-      }
-      
-      aux.obs$Dates$start <- as.POSIXct(aux.obs$Dates$start, tz = "CEST")
-      aux.obs$Dates$end <- as.POSIXct(aux.obs$Dates$end, tz = "CEST")
-      
-      #computation of custom functions as additional indices
-      if (length(custom_function) > 0) {
-        for (i in c(1:length(custom_function))) {
-          index.obs <- c(index.obs, 
-                         custom_function[[i]](aux.obs))
-          index.cal <- c(index.cal,
-                         custom_function[[i]](cal))
-          
-        }
-        
-      }
-      
       cal.list[[j]] <- cal 
-      index.list[[j]] <- index.cal
     }
     
     names(cal.list) <- methods
-    names(index.list) <- methods
-    
-    #function which normalize the values for a certain index
-    
-    normalization <- function(measure){
-      measure.norm <- c()
-      for (i in c(1:length(measure))) {
-        measure.norm <- c(measure.norm,
-                          1-((measure[i]-min(measure))/(max(measure)-min(measure))))
-      }
-      return(measure.norm)
-    }
-    
-    #computation of the absolute bias of the indices of each calibration method with respect to the observational values
-    
-    measures <- list()
-    
-    for (i in c(1:length(index.cal))) {
-      aux <- c()
-      for (j in c(1:length(methods))) {
-        aux <- c(aux, abs(index.list[[j]][i]-index.obs[i]))
-      }
-      measures[[length(measures)+1]] <- aux
-    }
-    
-    aux <- NULL
-    
-    #values normalization for the different indices
-    
-    norm.vector <- list()
-    for (i in c(1:length(measures))) {
-      norm.vector[[length(norm.vector)+1]] <- normalization(measures[[i]]) 
-    }
-    
-    #calculation of the scores for the different methods
-    
-    scores <- c()
-    for (j in c(1:(length(methods)))) {
-      score <- c()
-      for (i in c(1:length(measures))) {
-        
-        score <- c(score,norm.vector[[i]][j])
-        
-      }
-      if (length(weights > 0)) {
-        
-        score <- weighted.mean(score, w = weights)
-        
-      }else{
-        
-        score <- mean(score)
-        
-      }
-      
-      scores <- c(scores, score)
-    }
-    
-    names(scores) <- methods
-    
+
+    scores <- RFscore(obs = obs,
+                      series = cal.list,
+                      index = index,
+                      custom_function = custom_function,
+                      methods = methods,
+                      weights = weights)
+
     if (length(which(methods == "gpqm")) > 1) {
       
       idx <- which(names(scores) == "gpqm")
