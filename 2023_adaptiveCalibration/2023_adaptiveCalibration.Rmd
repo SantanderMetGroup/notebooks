@@ -85,6 +85,7 @@ temp <- tempfile(fileext = ".zip")
 download.file("https://zenodo.org/record/7014397/files/South_Pacific_precipitation.zip",temp)
 ```
 
+
 The downloaded dataset comprises a collection of stations located in the
 South Pacific region, obtained from the **PACRAIN** (Pacific Rainfall
 Database) [<http://pacrain.ou.edu/>]. Additionally, precipitation series
@@ -394,6 +395,7 @@ score_w <- RFscore(obs = obs,
                             "adaptive"),
                 weights = w)
 ```
+
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 print(score)

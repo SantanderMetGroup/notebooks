@@ -11,7 +11,7 @@
 
 <meta name="author" content="O.Mirones, J.Bedia, S.Herrera, M.Iturbide &amp; J.Baño-Medina" />
 
-<meta name="date" content="2023-06-23" />
+<meta name="date" content="2023-06-26" />
 
 <title>Refining Remote Sensing precipitation Datasets in the South Pacific: An Adaptive Multi-Method Approach for Calibrating the TRMM Product</title>
 
@@ -355,7 +355,7 @@ div.tocify {
 <h1 class="title toc-ignore">Refining Remote Sensing precipitation Datasets in the South Pacific: An Adaptive Multi-Method Approach for Calibrating the TRMM Product</h1>
 <h3 class="subtitle">Submitted to Hydrology and Earth System Sciences (HESS)</h3>
 <h4 class="author">O.Mirones, J.Bedia, S.Herrera, M.Iturbide &amp; J.Baño-Medina</h4>
-<h4 class="date">2023-06-23</h4>
+<h4 class="date">2023-06-26</h4>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 This notebook provides a comprehensive illustration of the entire adaptive calibration process, including available data download from an open repository and the computation of both standard and adaptive calibration RF scores.
@@ -427,11 +427,12 @@ This notebook provides a comprehensive illustration of the entire adaptive calib
 <li><p>The absolute difference between the observed series and the climate indices is computed.</p></li>
 <li><p>The difference in absolute value for each index is normalized across all methods. The resulting score for each method is the average of the normalized values of the climate indices.</p></li>
 </ol>
-<p>This process of the score calculation is encapsulated in a atomic function called <code>RFScore</code>. In <code>RFScore</code> is possible to assing arbitrary weights through <code>weights</code> argument to the indices involved in the RF score, giving more importance to specific precipitation characteristics, such as the representation of extremes. The weighting aims to guide the calibration towards better adjustment in the upper tail of the distribution, thereby achieving improved correction for extreme precipitation events beyond a certain threshold. This allows obtaining a score that focuses more on specific indices, such as extreme precipitation (e.g., <em>R20p</em> or <em>P98WetAmount</em>).</p>
+<p>This process of the score calculation is encapsulated in a atomic function called <code>RFScore</code>. In <code>RFScore</code> is possible to assign arbitrary weights through <code>weights</code> argument to the indices involved in the RF score, giving more importance to specific precipitation characteristics, such as the representation of extremes. The weighting aims to guide the calibration towards better adjustment in the upper tail of the distribution, thereby achieving improved correction for extreme precipitation events beyond a certain threshold. This allows obtaining a score that focuses more on specific indices, such as extreme precipitation (e.g., <em>R20p</em> or <em>P98WetAmount</em>).</p>
 <p>The cross-validation scheme and calibration methods are implemented within the calibration and empirical statistical downscaling tools provided by the <code>downscaleR</code>package <em>(Bedia et al., 2020)</em> in the <code>climate4R</code> framework.</p>
 <p>The validation of the results is based on the VALUE climatic indices. However, the <code>adaptiveCalibration</code> function allows the inclusion of other user-defined indices using the <code>custom_function</code> argument, such as the <em>MaxReturnValue</em> index.</p>
 <p>Finally, the adaptive calibration is performed using the scaling, eQM, pQM, and gpQM (with 0.95 and 0.75 thresholds) techniques. These methods are also computed independently to evaluate whether the adaptive calibration results in improved performance compared to the standard calibration methods.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">###load of auxiliar functions</span></span>
+<p>A few auxiliary functions have been prepared for paper calculations. These are next sourced from the <code>utils</code> directory:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">###load of auxiliary functions</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;./utils/adaptiveCalibration.R&quot;</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;./utils/RFscore.R&quot;</span>)</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;./utils/MaxReturnValue.R&quot;</span>)</span></code></pre></div>
@@ -443,11 +444,10 @@ This notebook provides a comprehensive illustration of the entire adaptive calib
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                             <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;Skewness&quot;</span>,<span class="st">&quot;Mean&quot;</span>,<span class="st">&quot;SDII&quot;</span>,</span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;R10&quot;</span>,<span class="st">&quot;R10p&quot;</span>,<span class="st">&quot;R20&quot;</span>,<span class="st">&quot;R20p&quot;</span>,</span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;P98Wet&quot;</span>,<span class="st">&quot;P98WetAmount&quot;</span>),</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                             <span class="at">weights =</span> <span class="cn">NULL</span>,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                             <span class="at">custom_function =</span> <span class="fu">list</span>(MaxReturnValue),</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                             <span class="at">scaling.type =</span> <span class="st">&quot;multiplicative&quot;</span>, </span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                             <span class="at">window =</span> <span class="cn">NULL</span>, </span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>                             <span class="at">theta =</span> <span class="fu">c</span>(.<span class="dv">95</span>, .<span class="dv">75</span>))</span></code></pre></div>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                             <span class="at">custom_function =</span> <span class="fu">list</span>(MaxReturnValue),</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                             <span class="at">scaling.type =</span> <span class="st">&quot;multiplicative&quot;</span>, </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                             <span class="at">window =</span> <span class="cn">NULL</span>, </span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                             <span class="at">theta =</span> <span class="fu">c</span>(.<span class="dv">95</span>, .<span class="dv">75</span>))</span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="do">###adaptive calibration including weigths</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">05</span>, .<span class="dv">05</span>, .<span class="dv">05</span>, .<span class="dv">05</span>, .<span class="dv">05</span>, .<span class="dv">15</span>, .<span class="dv">15</span>, .<span class="dv">15</span>, .<span class="dv">2</span>, .<span class="dv">1</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>cal_w <span class="ot">&lt;-</span> <span class="fu">adaptiveCalibration</span>(<span class="at">obs =</span> obs, <span class="at">sim =</span> trmm, </span>
@@ -466,10 +466,10 @@ This notebook provides a comprehensive illustration of the entire adaptive calib
 </div>
 <div id="computation-of-standard-calibration-techniques" class="section level2" number="2.3">
 <h2 number="2.3"><span class="header-section-number">2.3</span> Computation of standard calibration techniques</h2>
-<p>After calculating the series calibrated using the adaptive methodology, it is essential to compute the series of standard calibrations to assess their performance and compare them with the adaptive methodology. The <code>downscaleR</code> package provides the <code>biasCorrection</code> function, which offers specific arguments based on the chosen calibration method:</p>
+<p>After completing the calculation of the series calibrated using the adaptive methodology, it is crucial to compute a series of standard calibrations to evaluate their performance and compare them with the adaptive methodology. For this purpose, the <code>downscaleR</code> package includes the <code>biasCorrection</code> function, which provides specific arguments depending on the calibration method selected.</p>
 <ol style="list-style-type: decimal">
-<li><p>The <code>multiplicative</code> argument determines the type of scaling method employed. It can be set to <code>additive</code> for unbounded variables like temperature or <code>multiplicative</code> for bounded variables like precipitation. If the bias correction method is not set to <code>scaling</code>, this argument is disregarded.</p></li>
-<li><p>The <code>fitdistr.args</code> argument allows us to specify additional arguments passed to the <code>fitdistr</code> function, such as <code>densfun</code>, <code>start</code>, and others. This argument is only used when applying the <code>pqm</code> method.</p></li>
+<li><p>The <code>multiplicative</code> argument determines the type of scaling method employed. It can be set to <code>additive</code> for unbounded variables like temperature or <code>multiplicative</code> for (lower)bounded variables like precipitation. If the bias correction method is not set to <code>scaling</code>, this argument is disregarded.</p></li>
+<li><p>The <code>fitdistr.args</code> argument allows us to specify additional arguments passed to the <code>fitdistr</code> function, such as <code>densfun</code>, <code>start</code>, and others. This argument is only used when applying the <code>pqm</code> method to account for the different theoretical distribution function fitting.</p></li>
 <li><p>The <code>theta</code> argument defines the upper threshold (and lower threshold for the left tail, if necessary) above which values are fitted to a Generalized Pareto Distribution (GPD). Values below this threshold are fitted to a gamma distribution. By default, <code>theta</code> corresponds to the 95th percentile (and 5th percentile for the left tail). This argument is exclusive to the <code>gpqm</code>method.</p></li>
 </ol>
 <p>Hence, we compute the standard calibration for the scaling, eQM, pQM, and gpQM methods. In the case of the gpQM method, two series are generated: gpQM-95 and gpQM-75. The gpQM-95 series fits the data to a GPD above the 95th percentile, while the gpQM-75 series fits the data above the 75th percentile.</p>
@@ -580,32 +580,31 @@ This notebook provides a comprehensive illustration of the entire adaptive calib
 ##  [4] splines_3.6.3       jsonlite_1.8.3      viridisLite_0.4.1  
 ##  [7] foreach_1.5.1       dotCall64_1.0-2     kohonen_3.0.11     
 ## [10] assertthat_0.2.1    sp_1.6-0            deepnet_0.2        
-## [13] yaml_2.3.6          remotes_2.2.0       sessioninfo_1.1.1  
+## [13] yaml_2.2.1          remotes_2.2.0       sessioninfo_1.1.1  
 ## [16] pillar_1.8.1        lattice_0.20-41     sticky_0.5.6.1     
 ## [19] glue_1.6.2          reticulate_1.26     RcppEigen_0.3.3.9.3
-## [22] digest_0.6.30       colorspace_2.1-0    htmltools_0.5.0    
+## [22] digest_0.6.29       colorspace_2.1-0    htmltools_0.5.0    
 ## [25] Matrix_1.5-1        pkgconfig_2.0.3     scales_1.2.1       
 ## [28] processx_3.7.0      CircStats_0.2-6     proxy_0.4-26       
 ## [31] dtw_1.22-3          tibble_3.1.8        generics_0.1.3     
 ## [34] ggplot2_3.4.0       ellipsis_0.3.2      withr_2.5.0        
-## [37] verification_1.42   pbapply_1.5-0       cli_3.6.0          
+## [37] verification_1.42   pbapply_1.5-0       cli_3.6.1          
 ## [40] survival_3.2-7      magrittr_2.0.3      crayon_1.5.1       
-## [43] memoise_1.1.0       evaluate_0.15       ps_1.7.1           
+## [43] memoise_1.1.0       evaluate_0.20       ps_1.7.1           
 ## [46] fs_1.5.0            fansi_1.0.4         MASS_7.3-53        
 ## [49] pkgbuild_1.1.0      tools_3.6.3         prettyunits_1.1.1  
-## [52] lifecycle_1.0.3     stringr_1.4.0       munsell_0.5.0      
-## [55] glmnet_4.1-3        callr_3.5.1         signal_0.7-7       
-## [58] akima_0.6-3.4       compiler_3.6.3      evd_2.3-3          
-## [61] rlang_1.1.1         grid_3.6.3          RCurl_1.98-1.5     
-## [64] iterators_1.0.13    rstudioapi_0.14     spam_2.9-1         
-## [67] bitops_1.0-7        rmarkdown_2.5       boot_1.3-25        
-## [70] codetools_0.2-16    gtable_0.3.1        abind_1.4-5        
-## [73] R6_2.5.1            gridExtra_2.3       knitr_1.39         
-## [76] dplyr_1.0.9         utf8_1.2.3          rprojroot_2.0.3    
-## [79] shape_1.4.6         desc_1.2.0          stringi_1.5.3      
-## [82] parallel_3.6.3      Rcpp_1.0.10         fields_14.1        
-## [85] vctrs_0.5.2         png_0.1-7           tidyselect_1.2.0   
-## [88] xfun_0.30</code></pre>
+## [52] lifecycle_1.0.3     munsell_0.5.0       glmnet_4.1-3       
+## [55] callr_3.5.1         signal_0.7-7        akima_0.6-3.4      
+## [58] compiler_3.6.3      evd_2.3-3           rlang_1.1.1        
+## [61] grid_3.6.3          RCurl_1.98-1.5      iterators_1.0.13   
+## [64] rstudioapi_0.13     spam_2.9-1          bitops_1.0-7       
+## [67] rmarkdown_2.5       boot_1.3-25         gtable_0.3.1       
+## [70] codetools_0.2-16    abind_1.4-5         R6_2.5.1           
+## [73] gridExtra_2.3       knitr_1.42          dplyr_1.0.9        
+## [76] utf8_1.2.3          rprojroot_2.0.3     shape_1.4.6        
+## [79] desc_1.2.0          parallel_3.6.3      Rcpp_1.0.10        
+## [82] fields_14.1         vctrs_0.5.2         png_0.1-7          
+## [85] tidyselect_1.2.0    xfun_0.37</code></pre>
 </div>
 
 
