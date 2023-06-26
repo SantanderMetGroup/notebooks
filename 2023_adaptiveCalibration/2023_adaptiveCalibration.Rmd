@@ -16,7 +16,7 @@ output:
 encoding: UTF8
 documentclass: article
 subtitle: Submitted to Hydrology and Earth System Sciences (HESS)
-abstract: This notebook provides a comprehensive illustration of the entire adaptive calibration     process, including available data download from an open repository and the computation of both standard and adaptive calibration RF scores.
+abstract: This notebook provides a comprehensive illustration of the entire adaptive calibration process, including available data download from an open repository and the computation of both standard and adaptive calibration RF scores.
 urlcolor: blue
 editor_options:
   markdown:
@@ -195,7 +195,7 @@ computation follows these steps:
     the normalized values of the climate indices.
 
 This process of the score calculation is encapsulated in a atomic
-function called `RFScore`. In `RFScore` is possible to assing arbitrary
+function called `RFScore`. In `RFScore` is possible to assign arbitrary
 weights through `weights` argument to the indices involved in the RF
 score, giving more importance to specific precipitation characteristics,
 such as the representation of extremes. The weighting aims to guide the
@@ -221,8 +221,11 @@ are also computed independently to evaluate whether the adaptive
 calibration results in improved performance compared to the standard
 calibration methods.
 
+A few auxiliary functions have been prepared for paper calculations. These are
+next sourced from the `utils` directory:
+
 ```{r}
-###load of auxiliar functions
+###load of auxiliary functions
 source("./utils/adaptiveCalibration.R")
 source("./utils/RFscore.R")
 source("./utils/MaxReturnValue.R")
@@ -265,22 +268,23 @@ cal_w <- adaptiveCalibration(obs = obs, sim = trmm,
 
 ## Computation of standard calibration techniques
 
-After calculating the series calibrated using the adaptive methodology,
-it is essential to compute the series of standard calibrations to assess
-their performance and compare them with the adaptive methodology. The
-`downscaleR` package provides the `biasCorrection` function, which
-offers specific arguments based on the chosen calibration method:
+After completing the calculation of the series calibrated using the adaptive
+methodology, it is crucial to compute a series of standard calibrations
+to evaluate their performance and compare them with the adaptive methodology. 
+For this purpose, the `downscaleR` package includes the `biasCorrection` function,
+which provides specific arguments depending on the calibration method selected.
 
 1.  The `multiplicative` argument determines the type of scaling method
     employed. It can be set to `additive` for unbounded variables like
-    temperature or `multiplicative` for bounded variables like
+    temperature or `multiplicative` for (lower)bounded variables like
     precipitation. If the bias correction method is not set to
     `scaling`, this argument is disregarded.
 
 2.  The `fitdistr.args` argument allows us to specify additional
     arguments passed to the `fitdistr` function, such as `densfun`,
     `start`, and others. This argument is only used when applying the
-    `pqm` method.
+    `pqm` method to account for the different theoretical distribution
+    function fitting.
 
 3.  The `theta` argument defines the upper threshold (and lower
     threshold for the left tail, if necessary) above which values are
