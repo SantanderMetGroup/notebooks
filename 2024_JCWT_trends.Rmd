@@ -1,0 +1,333 @@
+---
+title: 'On the analysis of the Jenkinson-Collison classification suitability worldwide'
+author: J. A. Fernández-Granja, S. Brands, A. Casanueva, J. Bedia \& J. Fernández
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+    fig_caption: yes
+    highlight: pygments
+    latex_engine: pdflatex
+    pandoc_args:
+    - --number-sections
+    - --number-offset=0
+    toc: yes
+  html_document:
+    fig_caption: yes
+    highlight: pygments
+    number_sections: yes
+    theme: readable
+    toc: yes
+    toc_float: yes
+encoding: UTF8
+documentclass: article
+subtitle: Paper notebook - submitted to Geoscientific Model Development
+abstract: This is an example notebook illustrating some primary calculations undertaken in the paper. It is not intended to provide full reproducibility of the results, but a sample on how to achieve this using the [climate4R framework](https://github.com/SantanderMetGroup/climate4R), used in the paper. To this aim, we provide two exercises calculating two different types of results. For these examples, we use public datasets only, namely the NCEP-NCAR Reanalisys1 (NCEP), considering historical simulations.
+urlcolor: blue
+---
+
+```{=tex}
+\fontfamily{cmr}
+\fontsize{11}{22}
+\selectfont
+```
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      highlight = TRUE,
+                      message = FALSE,
+                      fig.align = "center",
+                      tidy = FALSE,
+                      eval = TRUE,
+                      fig.width = 7,
+                      cache = TRUE,
+                      cache.path = "./cache_html/",
+                      fig.path = "./cache_html/figs")
+# Thanks to this:
+# https://www.r-bloggers.com/wrapper-of-knitrinclude_graphics-to-handle-urls-pdf-outputs/
+# https://github.com/liao961120/linguisticsdown/blob/master/R/include_graphics2.R
+  
+include_graphics2 <- function(path, alt_path = NULL, handler = function(path) knitr::asis_output(paste('View', tools::file_ext(path), 'at', path)), ...) {
+  if (knitr::is_latex_output()) {
+    return(include_graphics_latex(path, alt_path, handler, ...))
+  } else {
+    return(knitr::include_graphics(path, ...))
+  }
+}
+include_graphics_latex <- function(path, alt_path = NULL, handler = function(path) knitr::asis_output(paste('View', tools::file_ext(path), 'at', path)), ...) {
+  # URL
+  if (grepl('^https?://', path)) {
+     ifelse(use_alt_path(path, alt_path),
+            path <- alt_path,
+            return(handler(path)))
+    ## Download Figure
+    dir_path <- paste0('downloadFigs4latex_',
+                       tools::file_path_sans_ext(knitr::current_input()))
+    if (!dir.exists(dir_path)) dir.create(dir_path)
+    file_path <- paste0(dir_path, '/',
+                        knitr::opts_current$get()$label, '.',
+                        tools::file_ext(path))
+    download.file(path, destfile = file_path)
+    path <- file_path
+  }
+  # Local files
+  else {
+     ifelse(use_alt_path(path, alt_path),
+            path <- alt_path,
+            return(handler(path)))
+  }
+  # Insert Figure
+  return(knitr::include_graphics(path, ...))
+}
+use_alt_path <- function(path, alt_path) {
+  # Invalid img ext & no alt provided: Don't include in File
+  if (inval_latex_img(path) && is.null(alt_path)) return(FALSE)
+  # Invalid img ext with alt provided: insert alt-figure
+  if (inval_latex_img(path) && !is.null(alt_path)) {
+      stopifnot(!inval_latex_img(alt_path))
+      return(TRUE)
+    }
+}
+inval_latex_img <- function(path) {
+  invalid_ext <- c('svg', 'SVG', 'GIF', 'gif')
+  return(tools::file_ext(path) %in% invalid_ext)
+}
+```
+
+# Used packages
+
+Regarding the packages within the `climate4R` framework, it is recommended to install the package versions used to compile this notebook in order to ensure the reproducibility of the paper results as accurately as possible. The appropriate package versions are indicated here through their version tags using the `devtools` package function `install_github` (Wickham *et al.* 2020):
+
+```{r, eval=FALSE}
+devtools::install_github(c("SantanderMetGroup/loadeR@v1.7.2",
+                           "SantanderMetGroup/transformeR@v2.1.5",
+                           "SantanderMetGroup/visualizeR@v1.6.1"))
+```
+
+Additional packages are required, like `magrittr` (Bache and Wickham 2014) that allows to conveniently concatenate functions via the pipe operator `%>%`; `raster` (Hijmans R et al. 2018) and `sp` (Pebesma and Bivand 2005, Bivand *et al.* 2013) both used for plotting:
+
+```{r,eval=TRUE,message=FALSE}
+install.packages("magrittr")
+install.packages("raster")
+install.packages("sp")
+```
+
+Alternatively, and updated image of the packages can be installed using the [conda recipe for climate4R](https://github.com/SantanderMetGroup/climate4R/tree/master/conda).
+
+## Cloud computing with the climate4R Hub
+
+Furthermore, there is a [docker](https://github.com/SantanderMetGroup/climate4R/tree/master/docker) `climate4R` installation available. The docker file also includes the [jupyter](https://jupyter.readthedocs.io/en/latest) framework enabling a direct usage of `climate4R` via the **climate4R Hub**, a cloud-based computing facility to run `climate4R` notebooks on the cloud using the [IFCA/CSIC Cloud Services](https://ifca.unican.es/en-us/research/advanced-computing-and-e-science)).
+
+The `climate4R` packages used in this experiment are next loaded:
+
+```{r,eval=TRUE,message=FALSE}
+require(loadeR)
+require(transformeR)
+require(visualizeR)
+require(magrittr)
+require(raster)
+require(sp)
+```
+
+# Analysis of Jenkinson-Collison Weather Types (JC-WT) from CMIP6 GCM: trend calculation in specific location {#exp1}
+
+> ***Note:** This notebook was run on a machine with the following technical specifications:\
+> \* Operating system: Ubuntu 20.04.4 LTS (64 bits)\
+> \* Memory required: 60 GiB\
+> \* Processor: 2x Intel(R) Xeon(R) CPU E5-2670 0 \@ 2.60GHz (16 cores, 32 threads)\
+> Some calculations could take several hours (even days)*
+
+In notebook, we will calculate tendencies (trends or slopes) of the Jenkinson and Collison Weather Types (JC-WT, 1977) agains Global Warming Levels (GWL, S. I. Seneviratne & Hauser, 2020) and Diez-Sierra et al., 2023). The JC-WT classification is a subsequent adaptation of the original Lamb Weather Types (LWT, Lamb, 1972) approach to obtain an automated, objective method that is also applicable to other locations different from the British Isles. Evaluations of GCMs using JC-WTs has been recently published in a global scale and for a large ensemble of models. Therefore, we find motivation to create this notebook where we analyze the trends of JC-WTs from models with good historical performance.
+
+## Loading JC-WTs products from Zenodo:
+
+We implement a loop executing this code for all years, so we can calculate the JC-WTs tendency from EC-Earth_rcp85 (EC-Earth Consortium, **2014**) model at 50ºN, 15ºW for the 21st Century:
+
+```{r}
+wt.names <-  c("A", "ANE", "AE", "ASE", "AS", "ASW", "AW", "ANW", "AN",
+               "NE",  "E", "SE",  "S",  "SW",  "W",  "NW",  "N", 
+               "C", "CNE", "CE", "CSE", "CS", "CSW", "CW", "CNW", "CN", "U")
+destfile <- tempfile()
+download.file("https://zenodo.org/records/14282539/files/JCWT_CMIP5_EC-EARTH_r12i1p1_rcp85_2006_2100.nc?download=1", destfile = destfile) 
+
+#We define vector with years and matrix that will save seasonal JC-WT probabilities from Ec-Earth3:
+years <- 2006:2100
+JCWT.ecearth3.probs.matrix <- matrix(nrow = length(years), ncol = length(wt.names))
+
+for (i in 1:length(years)) {
+  #Loading the dataset yearly only at 50ºN, 15ºW for summer (JJA):
+  JCWT.ecearth3 <- loadGridData(dataset = destfile,
+                                var = "JC_weather_type", lonLim = c(-15, -15), latLim = c(50, 50),
+                                season = c(6,7,8), years = years[i])
+  #Probabilities calculations: 
+  JCWT.ecearth3.probs <- table(JCWT.ecearth3$Data) %>% prop.table() 
+  
+  #We complete the non-existing JC-WTs with prob = 0:
+  existing.JCWT <- as.numeric(names(JCWT.ecearth3.probs))
+  all.JCWT <- existing.JCWT[match(1:27, existing.JCWT)]
+  all.JCWT.ecearth3.probs <- JCWT.ecearth3.probs[match(all.JCWT, existing.JCWT)] 
+  all.JCWT.ecearth3.probs[which(is.na(all.JCWT.ecearth3.probs))] <- 0
+  names(all.JCWT.ecearth3.probs) <- wt.names
+  
+  #Save JC-WT probabilities in matrix:
+  JCWT.ecearth3.probs.matrix[i, ] <- all.JCWT.ecearth3.probs
+}
+```
+
+With this, we save in `JCWT.ecearth3.probs.matrix` the JC-WT summer (JJA) probabilities in all years from 2006 to 2100 from EC-Earth3_rcp85 model at 50ºN, 15ºW.
+
+Now, we are going to load historical JC-WT calculation from Brands (2022) and Brands et al. (2023). The historical JC-WTs are divided in two different Zenodo repositories divided in Northern and Southern Hemispheres:
+
+-   JC-WT historical Northern Hemisphere (Brands, 2022): <https://doi.org/10.5281/zenodo.8113174>
+
+-   JC-WT historical Southern Hemisphere (Brands et al., 2023): <https://doi.org/10.5281/zenodo.7872012>
+
+These datasets are saved as *.zip* files. Thus, it would be necessary to download the .zip file with all the JC-WTs from all GCMs. After that, historical JC-WTs of EC-Earth3 can be loaded and processed using similar code as the just presented above. For this example, the files to be loaded are named as `wtseries_ec_earth_historical_r12i1p1_nh_1979_2005.nc` and `wtseries_ec_earth_historical_r12i1p1_nh_1979_2005.nc`, and the routes where this file is storage in your computer/server can be saved in `your.directory.nh` and `your.directory.sh`. Note that two name-files and two routes are distinguished depending on the hemisphere, `nh` of `sh` .
+
+```{r, eval = TRUE}
+
+years <- 1979:2014
+JCWT.ecearth3.hist.probs.matrix <- matrix(nrow = length(years), ncol = length(wt.names))
+for (i in 1:length(years)) {
+  #Loading "wtseries_ec_earth3_historical_r1i1p1f1_nh_1979_2014.nc" from "your.directory":
+  JCWT.ecearth3.hist.nh <- loadGridData(dataset = your.directory.nh,
+                                var = "wtseries", lonLim = c(-15, -15), latLim = c(50, 50),
+                                season = c(6,7,8), years = years[i])
+  
+  JCWT.ecearth3.hist.sh <- loadGridData(dataset = your.directory.sh,
+                                var = "wtseries", lonLim = c(-15, -15), latLim = c(50, 50),
+                                season = c(6,7,8), years = years[i])
+  
+  JCWT.ecearth3.hist <- transformeR::bindGrid(JCWT.ecearth3.hist.nh, JCWT.ecearth3.hist.sh, dimension = "lat")
+  
+  JCWT.ecearth3.hist.probs <- table(JCWT.ecearth3.hist$Data) %>% prop.table() 
+    
+  #We complete the non-existing JC-WTs with prob = 0:
+  existing.JCWT <- as.numeric(names(JCWT.ecearth3.hist.probs))
+  all.JCWT <- existing.JCWT[match(1:27, existing.JCWT)]
+  all.JCWT.ecearth3.probs <- JCWT.ecearth3.hist.probs[match(all.JCWT, existing.JCWT)] 
+  all.JCWT.ecearth3.probs[which(is.na(all.JCWT.ecearth3.probs))] <- 0
+  names(all.JCWT.ecearth3.probs) <- wt.names
+  
+  JCWT.ecearth3.hist.probs.matrix[i, ] <- all.JCWT.ecearth3.probs
+}
+```
+
+Now we concatenate the historical and scenario years of JC-WTs from EC-Earth, as well as we aggregate the 27 JC-WTs into 11 following Trigo and D. Later on, we calculate mean probabilities from the period 1979-2010 and JC-WTs probability anomalies from the different decades of the 21st century in order to implement the GWL plots and obtain JC-WTs tendencies from EC-Earth3:
+
+```{r}
+
+JCWT.probs.1979.2100 <- rbind(JCWT.ecearth3.hist.probs.matrix, JCWT.ecearth3.probs.matrix)
+
+JCWT.probs.1979.2100.aggr11 <- matrix(nrow = length(years), ncol = 11)
+JCWT.probs.1979.2100.aggr11[ ,4:11] <- JCWT.probs.1979.2100[ ,10:17]+(JCWT.probs.1979.2100[ ,2:9]*0.5)+(JCWT.probs.1979.2100[ ,19:26]*0.5)
+JCWT.probs.1979.2100.aggr11[ ,1] <- JCWT.probs.1979.2100[ ,1]+(apply((JCWT.probs.1979.2100[ ,2:9]*0.5), 1, sum))
+JCWT.probs.1979.2100.aggr11[ ,2] <- JCWT.probs.1979.2100[ ,18]+(apply((JCWT.probs.1979.2100[ ,19:26]*0.5), 1, sum))
+JCWT.probs.1979.2100.aggr11[ ,3] <- JCWT.probs.1979.2100[ ,27]
+```
+
+Now, we are going to retrieve GSAT data from EC-Earth_historical and EC-Earth_rcp85 models. This data are located in SantanderMetGroup/ATLAS github repository, with this links respectively:
+
+-   Historical: <https://github.com/SantanderMetGroup/ATLAS/blob/devel/datasets-aggregated-regionally/data/CMIP5/CMIP5_tas_land/CMIP5_EC-EARTH_r12i1p1_historical.csv>
+
+-   SSP585: <https://github.com/SantanderMetGroup/ATLAS/blob/devel/datasets-aggregated-regionally/data/CMIP5/CMIP5_tas_land/CMIP5_EC-EARTH_r12i1p1_rcp85.csv>
+
+We load the TAS data from this links and then calculate the TAS anomalie from the GCM for the different decades:
+
+```{r,eval=TRUE,message=FALSE}
+
+destfile.tas.hist <- tempfile()
+download.file("hhttps://github.com/SantanderMetGroup/ATLAS/blob/devel/datasets-aggregated-regionally/data/CMIP5/CMIP5_tas_land/CMIP5_EC-EARTH_r12i1p1_historical.csv", destfile = destfile) 
+
+destfile.tas.rcp85 <- tempfile()
+download.file("https://github.com/SantanderMetGroup/ATLAS/blob/devel/datasets-aggregated-regionally/data/CMIP5/CMIP5_tas_land/CMIP5_EC-EARTH_r12i1p1_rcp85.csv", destfile = destfile)
+
+gwl.anomalie <- c()
+
+# Loaging TAS data from .csv files and concatenating them:
+hist.tas.gcm <- read.table(destfile.tas.hist, sep = ",", header = TRUE)
+yrs <- strsplit(as.character(hist.tas.gcm$date), split = "-") %>% lapply(., "[[", 1) %>% unlist()
+mean.hist.tas.yrs <- tapply(hist.tas.gcm[["world"]], INDEX = yrs, FUN = "mean") 
+
+future.tas.gcm <- read.table(destfile.tas.rcp85, sep = ",", header = TRUE)
+yrs <- strsplit(as.character(future.tas.gcm$date), split = "-") %>% lapply(., "[[", 1) %>% unlist()
+mean.future.tas.yrs <- tapply(future.tas.gcm[["world"]], INDEX = yrs, FUN = "mean")
+
+mean.tas.yrs <- c(mean.hist.tas.yrs, mean.future.tas.yrs)
+indx.2010 <- (names(mean.tas.yrs) == "2010") %>% which()
+
+# Obtaining GWL anomalies from the GCM for the different decades: 
+for (j in 1:9) {
+     gwl.anomalie[j] <- mean(mean.tas.yrs[(indx.2010+((j-1)*10)):(indx.2010+((j-1)*10)+9)], na.rm = TRUE) - mean(mean.tas.yrs[1:51], na.rm = TRUE)  
+  }
+
+```
+
+The TAS anomalies values are saved in `gwl.anomalie` variable, so, with that, we have caracterized the GWLs from EC-Earth model in rcp85. Later on, we calculate the JC-WT anomalies of the mean frequencies for the different decades for the **A type**:
+
+```{r,eval=TRUE,message=FALSE}
+
+jcwt.freq <- matrix(nrow = length(paths.future.JJA), ncol = 9)
+trend.ts <- matrix(nrow = 34, ncol = 144)
+p.values.matrix <- matrix(nrow = 34, ncol = 144)
+
+# Obtaining A type anomaly from the GCM for the different decades 
+for (j in 1:9) {
+     jcwt.freq[j] <- mean(JCWT.probs.1979.2100.aggr11[(32+((j-1)*10)):(32+((j-1)*10)+9),1], na.rm = TRUE) - mean(gJCWT.probs.1979.2100.aggr11[1:27,1], na.rm = TRUE) #32 = position of year 2010.  
+}
+
+# Calculating linear regression inputing A freqs anomalies VS. GWL anomalies:
+model1 <- lm(as.vector(jcwt.freq) ~ as.vector(gwl.anomalie))
+trend.ts[j] <- summary(model1, confint = TRUE, digits = 3)$coefficients[2,1]
+p.values.matrix[j] <- summary(model1, confint = TRUE, digits = 3)$coefficients[2,4]
+gc()
+
+#Plotting anomalies JCWT vs GWL in scatterplot
+pal <- viridisLite::viridis(9) %>% rev()
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd = FALSE)
+plot(gwl.anomalie[1], jcwt.freq[1], 
+     xlim = c(0, 7),
+     col = pal[1], 
+     pch = 19,
+     ylim=c(-50, 50), 
+     xlab="GWL (ºC)", ylab=paste0(WT[n]," freq.(%)"), main=paste0(WT[1]," freq. at ", location_list[j]) )
+for (i in 2:9) {   ## Error aquí en el script, no usar "n" como indice, cambiar antes de correr en lustre
+  points(gwl.anomalie[ ,i], jcwt.freq[ ,i], col = pal[i], pch = 19)
+} 
+abline(model1, col="red", lwd=2) 
+par(xpd=TRUE)
+legend(x = "topright", 
+       legend = c(paste0("beta = ", round(trend.ts[j],2)),
+                  paste0("p.value = ", p.values.matrix[j]))) 
+legend(x = "topright", inset=c(-0.26,0),
+       legend = c("2010-2019", "2020-2029","2030-2039", "2040-2049","2050-2059", "2060-2069","2070-2079", "2080-2089","2090-2099"),
+       pch = 19, col = pal,
+       cex = .85, ncol = 1)  
+
+dev.off()
+
+```
+
+We can see in the Figure from above the slope (or trends) from the linear regression derived from the A type mean decadal frequencies anomalies from EC-Earth rcp85 versus the GWL anomalies. If we execute this code for different locations or grib-boxes, we can obtain global maps of trends for the A type. Additionally, executing this code for different models and combining their A frequency anomalies and GWL anomalies, trends for the multi-model ensemble can be obtained.
+
+# References
+
+-   Diez-Sierra, J., Iturbide, M., Fernández, J., Gutiérrez, J., Milovac, J., & Cofiño, A. (2023, 04). Consistency of the regional response to global warming levels from cmip5 and cordex projections. Climate Dynamics, 4047--4060. doi:10.1007/s00382-023-06790-y
+-   Fernandez-Granja, J. A., Casanueva, A., Bedia, J., and Fernández, J.: Improved atmospheric circulation over Europe by the new generation of CMIP6 earth system models, Climate Dynamics, 56, <https://doi.org/10.1007/s00382-021-05652-9>, 2021.
+-   Frías, M.D., Iturbide, M., Manzanas, R., Bedia, J., Fernández, J., Herrera, S., Cofiño, A.S., Gutiérrez, J.M., 2018. An R package to visualize and communicate uncertainty in seasonal climate prediction. Environmental Modelling & Software 99, 101--110. <https://doi.org/10.1016/j.envsoft.2017.09.008>
+-   Iturbide, M., Bedia, J., Herrera, S., Baño-Medina, J., Fernández, J., Frías, M.D., Manzanas, R., San-Martín, D., Cimadevilla, E., Cofiño, A.S., Gutiérrez, J.M., 2019. The R-based climate4R open framework for reproducible climate data access and post-processing. Environmental Modelling & Software 111, 42--54. <https://doi.org/10.1016/j.envsoft.2018.09.009>
+-   Iturbide, M., Gutiérrez, J., Alves, L., Bedia, J., Cerezo-Mota, R., Cimadevilla, Ezequiel, Cofiño, Antonio, Di Luca, Alejandro, Faria, Sergio, Gorodetskaya, Irina, Hauser, Mathias, Herrera García, Sixto, Hennessy, Kevin, Hewitt, Helene, Jones, R., Krakovska, Svitlana, Manzanas, Rodrigo, Martinez-Castro, Daniel, Narisma, Gemma, Vera, Carolina. (2020). An update of IPCC climate reference regions for subcontinental analysis of climate model data: definition and aggregated datasets. Earth System Science Data. 12. 2959-2970. <https://doi.org/10.5194/essd-12-2959-2020>.
+-   EC-Earth Consortium (EC-Earth) **(2014)**. *EC-EARTH model output prepared for CMIP5, served by ESGF*. World Data Center for Climate (WDCC) at DKRZ. <https://hdl.handle.net/21.14106/4008a720db188e0c395097b1e1dc007f20e82872>
+-   Jenkinson, A. and Collison, F.: An initial climatology of gales over the North sea. Synoptic Climatology Branch Memorandum, Meteorological Office, 62, 1977.
+-   Lamb, H.: British Isles Weather types and a register of daily sequence of circulation patterns 1861-1971., Meteorological Office, Geophysical Memoir., 116, 1--85, 1972.
+-   Milton Bache, S. and Wickham, H., 2014. magrittr: A Forward-Pipe Operator for R. R package version 1.5. <https://CRAN.R-project.org/package=magrittr>
+-   Pebesma, E.J., R.S. Bivand, 2005. Classes and methods for spatial data in R. R News 5 (2), <https://cran.r-project.org/doc/Rnews/>.
+-   Roger S. Bivand, Edzer Pebesma, Virgilio Gomez-Rubio, 2013. Applied spatial data analysis with R, Second edition. Springer, NY. <https://asdar-book.org/>
+-   Sarkar, Deepayan, 2008. Lattice: Multivariate Data Visualization with R. Springer, New York. ISBN 978-0-387-75968-5
+-   Seneviratne, S. I., & Hauser, M. (2020). Regional climate sensitivity of climate extremes in cmip6 versus cmip5 multimodel ensembles. Earth's Future, 8 (9), e2019EF001474. doi: <https://doi.org/10.1029/2019EF001474>
+-   Wickham, H., Hester, J. and Chang, W., 2020. devtools: Tools to Make Developing R Packages Easier. R package version 2.3.0. <https://CRAN.R-project.org/package=devtools>
+
+# Session info
+
+```{r}
+sessionInfo() %>% print()
+```
